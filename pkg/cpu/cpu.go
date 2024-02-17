@@ -85,3 +85,11 @@ func (c *CPU) BC() uint16 {
 func (c *CPU) DE() uint16 {
 	return (uint16(c.D) << 8) | (uint16(c.E))
 }
+
+func (c *CPU) FetchExecute() {
+	opcode := c.ram.ReadU8(c.PC)
+	// LD r,r
+	if opcode >= 0x40 && opcode <= 0x7F {
+
+	}
+}
