@@ -5,7 +5,7 @@ func (c *CPU) Add(opcode uint8, addCarry bool) {
 	src := opcode & 0b111
 	c.InstrAdd(c.SetA, c.A, c.FetchR8(src), addCarry)
 }
-func (c *CPU) AddImm(addCarry bool) {
+func (c *CPU) AddImm8(addCarry bool) {
 	c.InstrAdd(c.SetA, c.A, c.ReadU8(c.PC), addCarry)
 }
 
@@ -14,7 +14,7 @@ func (c *CPU) Sub(opcode uint8, addCarry bool) {
 	src := opcode & 0b111
 	c.InstrSub(c.SetA, c.A, c.FetchR8(src), addCarry)
 }
-func (c *CPU) SubImm(addCarry bool) {
+func (c *CPU) SubImm8(addCarry bool) {
 	c.InstrSub(c.SetA, c.A, c.ReadU8(c.PC), addCarry)
 }
 
@@ -51,58 +51,74 @@ func (c *CPU) InstrSub(set func(uint8), a uint8, b uint8, addCarry bool) {
 func (c *CPU) And(opcode uint8) {
 	src := opcode & 0b111
 	val := c.FetchR8(src)
-	result := c.A & val
 
+	c.InstrAnd(c.SetA, c.A, val)
+}
+
+func (c *CPU) InstrAnd(set func(uint8), a uint8, b uint8) {
+	result := a & b
 	c.SetZ(result == 0)
 	c.SetN(false)
 	c.SetH(true)
 	c.SetC(false)
 
-	c.A = uint8(result)
+	set(uint8(result))
 }
 
-func (c *CPU) InstrAnd() {
-
-}
-
-// TODO: test this
 func (c *CPU) Or(opcode uint8) {
 	src := opcode & 0b111
 	val := c.FetchR8(src)
-	result := c.A | val
+
+	c.InstrOr(c.SetA, c.A, val)
+}
+
+// TODO: test this
+func (c *CPU) InstrOr(set func(uint8), a uint8, b uint8) {
+	result := a | b
 
 	c.SetZ(result == 0)
 	c.SetN(false)
 	c.SetH(false)
 	c.SetC(false)
 
-	c.A = uint8(result)
+	set(result)
 }
 
-// TODO: test this
 func (c *CPU) Xor(opcode uint8) {
 	src := opcode & 0b111
 	val := c.FetchR8(src)
-	result := c.A ^ val
+	c.InstrXor(c.SetA, c.A, val)
+}
+
+// TODO: test this
+func (c *CPU) InstrXor(set func(uint8), a uint8, b uint8) {
+	result := a ^ b
 
 	c.SetZ(result == 0)
 	c.SetN(false)
 	c.SetH(false)
 	c.SetC(false)
 
-	c.A = uint8(result)
+	set(result)
+}
+
+func (c *CPU) Cp(opcode uint8) {
+
+	src := opcode & 0b111
+	val := c.FetchR8(src)
+	c.InstrCp(c.SetA, c.A, val)
 }
 
 // TODO: test this
-func (c *CPU) Cp(opcode uint8) {
-	src := opcode & 0b111
-	val := c.FetchR8(src)
-	result := c.A - val
+func (c *CPU) InstrCp(set func(uint8), a uint8, b uint8) {
+	result := a - b
 
 	c.SetZ(result == 0)
 	c.SetN(true)
-	c.SetH((c.A & 0xF) > (val & 0xF))
-	c.SetC(c.A > val)
+	c.SetH((a & 0xF) > (b & 0xF))
+	c.SetC(a > b)
+
+	set(result)
 }
 
 func (c *CPU) Inc8(opcode uint8) {

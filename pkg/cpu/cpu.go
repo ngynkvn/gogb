@@ -215,10 +215,10 @@ func (c *CPU) FetchExecute() {
 		fallthrough
 	case 0xC6:
 		// ADD A, n8
-		c.InstrAdd(c.SetA, c.A, c.ReadU8(c.PC), false)
+		c.AddImm8(false)
 	case 0xD6:
 		// SUB A, n8
-		c.SubImm8()
+		c.SubImm8(false)
 	case 0xE6:
 		// AND A, n8
 		c.AndImm8()
