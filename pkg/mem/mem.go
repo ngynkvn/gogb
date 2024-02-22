@@ -18,6 +18,10 @@ func (r *RAM) ReadU8(pos uint16) uint8 {
 	return r.memory[pos]
 }
 
+func (r *RAM) Ptr(pos uint16) *uint8 {
+	return &r.memory[pos]
+}
+
 // GB ROMs are little endian, least significant bytes come first
 func (r *RAM) ReadU16(pos uint16) uint16 {
 	low := r.memory[pos]
