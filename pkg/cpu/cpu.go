@@ -111,8 +111,14 @@ func (c *CPU) SetA(val uint8) {
 }
 
 func (c *CPU) FetchExecute() {
+	if c.halt {
+		return
+	}
 	opcode := c.ReadU8(c.PC)
 	switch opcode {
+	case 0x00:
+		// NOP
+		break
 	case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
 		0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
 		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
@@ -122,6 +128,12 @@ func (c *CPU) FetchExecute() {
 		0x70, 0x71, 0x72, 0x73, 0x74, 0x75 /*0x76*/, 0x77,
 		0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F:
 		c.Ld(opcode)
+	case 0x01, 0x11, 0x21, 0x31:
+		// LD r16, n16
+		c.Ld16(opcode)
+	case 0x02, 0x12, 0x22, 0x32:
+		// LD [r16mem], A
+		c.LdMem8(opcode)
 	case 0x76:
 		c.halt = true
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
@@ -149,9 +161,10 @@ func (c *CPU) FetchExecute() {
 		// INC A, r8
 		c.Cp(opcode)
 	case 0x03, 0x13, 0x23, 0x33:
+		// INC r16
 		c.Inc16(opcode)
 	case 0x0B, 0x1B, 0x2B, 0x3B:
-		// DEC r8
+		// DEC r16
 		c.Dec16(opcode)
 	case 0x0C, 0x1C, 0x2C, 0x3C,
 		0x04, 0x14, 0x24, 0x34:
@@ -159,12 +172,11 @@ func (c *CPU) FetchExecute() {
 		c.Inc8(opcode)
 	case 0x0D, 0x1D, 0x2D, 0x3D,
 		0x05, 0x15, 0x25, 0x35:
-		// INC r8
+		// DEC r8
 		c.Dec8(opcode)
 	case 0x09, 0x19, 0x29, 0x39:
-		// ADD r16
-		c.Add16(opcode)
-		fallthrough
+		// ADD HL, r16
+		c.InstrAdd16(c.SetHL, c.HL(), c.FetchR16((opcode>>3)&0b11), false)
 	case 0x18, 0x20, 0x28, 0x30, 0x38:
 		// JR
 		fallthrough
@@ -239,7 +251,7 @@ func (c *CPU) FetchExecute() {
 		c.CpImm8()
 	case 0xCB:
 		// PREFIX
-		fallthrough
+		c.CB(c.ReadU8(c.PC))
 	case 0xD9:
 		// RETI
 		fallthrough
@@ -286,6 +298,17 @@ func (c *CPU) FetchExecute() {
 		// ILLEGAL_FD
 		fallthrough
 	default:
-		panic(fmt.Sprintln("unimplemented:", INSTR_NAME[opcode]))
+		fmt.Printf("%s\n", c.Dump())
+		fmt.Printf("\n\nunimplemented:%s\t%#x\n", INSTR_NAME[opcode], opcode)
+		panic("unimplemented")
 	}
+}
+
+func (c *CPU) Dump() string {
+	return fmt.Sprintf(
+		`AF: %04X
+BC: %04X
+DE: %04X
+SP: %04X
+PC: %04X`, c.AF(), c.BC(), c.DE(), c.SP, c.PC)
 }

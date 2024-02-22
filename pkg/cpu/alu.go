@@ -26,10 +26,19 @@ func (c *CPU) And(opcode uint8) {
 	c.InstrAnd(c.SetA, c.A, val)
 }
 
+func (c *CPU) AndImm8() {
+	val := c.ReadU8(c.PC)
+	c.InstrAnd(c.SetA, c.A, val)
+}
+
 func (c *CPU) Or(opcode uint8) {
 	src := opcode & 0b111
 	val := c.FetchR8(src)
 
+	c.InstrOr(c.SetA, c.A, val)
+}
+func (c *CPU) OrImm8() {
+	val := c.ReadU8(c.PC)
 	c.InstrOr(c.SetA, c.A, val)
 }
 
@@ -38,11 +47,19 @@ func (c *CPU) Xor(opcode uint8) {
 	val := c.FetchR8(src)
 	c.InstrXor(c.SetA, c.A, val)
 }
+func (c *CPU) XorImm8() {
+	val := c.ReadU8(c.PC)
+	c.InstrXor(c.SetA, c.A, val)
+}
 
 func (c *CPU) Cp(opcode uint8) {
 
 	src := opcode & 0b111
 	val := c.FetchR8(src)
+	c.InstrCp(c.SetA, c.A, val)
+}
+func (c *CPU) CpImm8() {
+	val := c.ReadU8(c.PC)
 	c.InstrCp(c.SetA, c.A, val)
 }
 
@@ -71,8 +88,19 @@ func (c *CPU) Dec8(opcode uint8) {
 
 }
 
+func (c *CPU) InstrAdd16(set func(uint16), a uint16, b uint16, addCarry bool) {
+	carry := int32(B(addCarry))
+	result := int32(a) + int32(b) + carry
+
+	c.SetN(false)
+	c.SetH((a&0xFF)+(b&0xFF)+uint16(carry) > 0xFF)
+	c.SetC(result > 0xFFFF)
+
+	set(uint16(result))
+}
+
 func (c *CPU) Inc16(opcode uint8) {
-	dst := (opcode >> 3) & 0b111
+	dst := (opcode >> 3) & 0b11
 	val := c.FetchR16(dst)
 	result := val + 1
 
@@ -84,7 +112,7 @@ func (c *CPU) Inc16(opcode uint8) {
 }
 
 func (c *CPU) Dec16(opcode uint8) {
-	dst := (opcode >> 3) & 0b111
+	dst := (opcode >> 3) & 0b11
 	val := c.FetchR16(dst)
 	result := val - 1
 
@@ -96,10 +124,7 @@ func (c *CPU) Dec16(opcode uint8) {
 }
 
 func (c *CPU) InstrAdd(set func(uint8), a uint8, b uint8, addCarry bool) {
-	carry := int16(0)
-	if c.F_C() && addCarry {
-		carry = 1
-	}
+	carry := int16(B(c.F_C() && addCarry))
 	result := int16(a) + int16(b) + carry
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -110,10 +135,7 @@ func (c *CPU) InstrAdd(set func(uint8), a uint8, b uint8, addCarry bool) {
 }
 
 func (c *CPU) InstrSub(set func(uint8), a uint8, b uint8, addCarry bool) {
-	carry := int16(0)
-	if c.F_C() && addCarry {
-		carry = 1
-	}
+	carry := int16(B(c.F_C() && addCarry))
 	result := int16(a) - int16(b) - carry
 
 	c.SetZ(result == 0)
@@ -168,4 +190,12 @@ func (c *CPU) InstrCp(set func(uint8), a uint8, b uint8) {
 	c.SetC(a > b)
 
 	set(result)
+}
+
+func B(b bool) int {
+	if b {
+		return 1
+	} else {
+		return 0
+	}
 }
