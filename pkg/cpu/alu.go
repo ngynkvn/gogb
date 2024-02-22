@@ -88,3 +88,53 @@ func (c *CPU) Cp(opcode uint8) {
 	c.SetH((c.A & 0xF) > (val & 0xF))
 	c.SetC(c.A > val)
 }
+
+func (c *CPU) Inc8(opcode uint8) {
+	dst := (opcode >> 3) & 0b111
+	val := c.FetchR8(dst)
+	result := val + 1
+
+	c.SetZ(result == 0)
+	c.SetN(false)
+	c.SetH((val & 0xF) == 0xF)
+
+	*c.Location(dst) = result
+}
+
+func (c *CPU) Dec8(opcode uint8) {
+	dst := (opcode >> 3) & 0b111
+	val := c.FetchR8(dst)
+	result := val - 1
+
+	c.SetZ(result == 0)
+	c.SetN(false)
+	c.SetH((val & 0xF) == 0x0)
+
+	*c.Location(dst) = result
+
+}
+
+func (c *CPU) Inc16(opcode uint8) {
+	dst := (opcode >> 3) & 0b111
+	val := c.FetchR16(dst)
+	result := val + 1
+
+	c.SetZ(result == 0)
+	c.SetN(false)
+	c.SetH((val & 0xF) == 0xF)
+
+	*c.Location(dst) = result
+}
+
+func (c *CPU) Dec16(opcode uint8) {
+	dst := (opcode >> 3) & 0b111
+	val := c.FetchR16(dst)
+	result := val - 1
+
+	c.SetZ(result == 0)
+	c.SetN(false)
+	c.SetH((val & 0xF) == 0x0)
+
+	*c.Location(dst) = result
+
+}

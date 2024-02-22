@@ -23,6 +23,22 @@ func (c *CPU) Location(reg uint8) *uint8 {
 	}
 }
 
+func (c *CPU) FetchR16(reg uint8) uint16 {
+	switch reg {
+
+	case 0:
+		return c.BC()
+	case 1:
+		return c.DE()
+	case 2:
+		return c.HL()
+	case 3:
+		return c.SP
+	default:
+		panic("Out of range")
+	}
+}
+
 func (c *CPU) FetchR8(reg uint8) uint8 {
 	switch reg {
 	case 0:
