@@ -106,6 +106,10 @@ func (c *CPU) HL() uint16 {
 	return (uint16(c.H) << 8) | (uint16(c.L))
 }
 
+func (c *CPU) SetA(val uint8) {
+	c.A = val
+}
+
 func (c *CPU) FetchExecute() {
 	opcode := c.ReadU8(c.PC)
 	switch opcode {
@@ -157,8 +161,9 @@ func (c *CPU) FetchExecute() {
 		0x05, 0x15, 0x25, 0x35:
 		// INC r8
 		c.Dec8(opcode)
-	case 0x09, 0x19, 0x29, 0x39, 0xC6, 0xE8:
-		// ADD
+	case 0x09, 0x19, 0x29, 0x39:
+		// ADD r16
+		c.Add16(opcode)
 		fallthrough
 	case 0x18, 0x20, 0x28, 0x30, 0x38:
 		// JR
@@ -208,27 +213,30 @@ func (c *CPU) FetchExecute() {
 	case 0x3F:
 		// CCF
 		fallthrough
-	case 0xCE:
-		// ADC
-		fallthrough
+	case 0xC6:
+		// ADD A, n8
+		c.InstrAdd(c.SetA, c.A, c.ReadU8(c.PC), false)
 	case 0xD6:
-		// SUB
-		fallthrough
-	case 0xDE:
-		// SBC
-		fallthrough
+		// SUB A, n8
+		c.SubImm8()
 	case 0xE6:
-		// AND
-		fallthrough
-	case 0xEE:
-		// XOR
-		fallthrough
+		// AND A, n8
+		c.AndImm8()
 	case 0xF6:
-		// OR
-		fallthrough
+		// OR A, n8
+		c.OrImm8()
+	case 0xCE:
+		// ADC A, n8
+		c.AddImm8(true)
+	case 0xDE:
+		// SBC A, n8
+		c.SubImm8(true)
+	case 0xEE:
+		// XOR A, n8
+		c.XorImm8()
 	case 0xFE:
-		// CP
-		fallthrough
+		// CP A, n8
+		c.CpImm8()
 	case 0xCB:
 		// PREFIX
 		fallthrough
