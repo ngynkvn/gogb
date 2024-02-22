@@ -115,6 +115,7 @@ func (c *CPU) FetchExecute() {
 		return
 	}
 	opcode := c.ReadU8(c.PC)
+	// add todo:['0x08', '0xF2', '0xF8', '0xF9']
 	switch opcode {
 	case 0x00:
 		// NOP
@@ -177,6 +178,14 @@ func (c *CPU) FetchExecute() {
 	case 0x09, 0x19, 0x29, 0x39:
 		// ADD HL, r16
 		c.InstrAdd16(c.SetHL, c.HL(), c.FetchR16((opcode>>3)&0b11), false)
+	case 0x06, 0x16, 0x26, 0x36,
+		0x0E, 0x1E, 0x2E, 0x3E:
+		// LD r8, n8
+		c.InstrLd8(c.SetR8((opcode>>3)&0b111), c.ReadU8(c.PC))
+	case 0x0A, 0x1A, 0x2A, 0x3A:
+		// LD A, [mem]
+		c.InstrLd8(c.SetA, c.ReadU8(c.FetchR16Mem((opcode>>3)&0b11)))
+
 	case 0x18, 0x20, 0x28, 0x30, 0x38:
 		// JR
 		fallthrough

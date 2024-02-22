@@ -27,6 +27,12 @@ func SplitU16(value uint16) (uint8, uint8) {
 	return uint8(value >> 8), uint8(value & 0xF)
 }
 
+func (c *CPU) SetR8(reg uint8) func(uint8) {
+	return func(u uint8) {
+		*c.Location(reg) = u
+	}
+}
+
 func (c *CPU) Set16(dst uint8, value uint16) {
 	switch dst {
 	case 0:
@@ -62,7 +68,6 @@ func (c *CPU) SetHL(value uint16) {
 
 func (c *CPU) FetchR16(reg uint8) uint16 {
 	switch reg {
-
 	case 0:
 		return c.BC()
 	case 1:
@@ -71,6 +76,42 @@ func (c *CPU) FetchR16(reg uint8) uint16 {
 		return c.HL()
 	case 3:
 		return c.SP
+	default:
+		panic("Out of range")
+	}
+}
+
+func (c *CPU) FetchR16Stk(reg uint8) uint16 {
+	switch reg {
+	case 0:
+		return c.BC()
+	case 1:
+		return c.DE()
+	case 2:
+		return c.HL()
+	case 3:
+		return c.AF()
+	default:
+		panic("Out of range")
+	}
+}
+
+func (c *CPU) FetchR16Mem(reg uint8) uint16 {
+	switch reg {
+	case 0:
+		return c.BC()
+	case 1:
+		return c.DE()
+	case 2:
+		// HL+
+		val := c.HL()
+		c.SetHL(c.HL() + 1)
+		return val
+	case 3:
+		// HL -
+		val := c.HL()
+		c.SetHL(c.HL() - 1)
+		return val
 	default:
 		panic("Out of range")
 	}
@@ -113,37 +154,8 @@ func (c *CPU) ReadU16(pos uint16) uint16 {
 	return c.ram.ReadU16(pos)
 }
 
-func (c *CPU) Ld16(opcode uint8) {
-	dst := (opcode >> 3) & 0b11
-	c.Set16(dst, c.ReadU16(c.PC))
-}
-
-func (c *CPU) LdMem8(opcode uint8) {
-	dst := (opcode >> 4) & 0b11
-	switch dst {
-	case 0:
-		// BC
-		c.InstrLd8(c.MemSet8(c.BC()), c.A)
-	case 1:
-		// DE
-		c.InstrLd8(c.MemSet8(c.DE()), c.A)
-	case 2:
-		// HL+
-		c.InstrLd8(c.MemSet8(c.HL()), c.A)
-	case 3:
-		// HL-
-		c.InstrLd8(c.MemSet8(c.HL()), c.A)
-	default:
-		panic("Out of range")
-	}
-}
-
 func (c *CPU) MemSet8(pos uint16) func(uint8) {
 	return func(u uint8) {
 		*c.ram.Ptr(pos) = u
 	}
-}
-
-func (c *CPU) InstrLd8(set func(uint8), value uint8) {
-	set(value)
 }
