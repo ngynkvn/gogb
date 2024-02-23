@@ -90,22 +90,6 @@ func NewCPU(mem *mem.RAM) *CPU {
 	return &cpu
 }
 
-func (c *CPU) AF() uint16 {
-	return (uint16(c.A) << 8) | (uint16(c.F))
-}
-
-func (c *CPU) BC() uint16 {
-	return (uint16(c.B) << 8) | (uint16(c.C))
-}
-
-func (c *CPU) DE() uint16 {
-	return (uint16(c.D) << 8) | (uint16(c.E))
-}
-
-func (c *CPU) HL() uint16 {
-	return (uint16(c.H) << 8) | (uint16(c.L))
-}
-
 func (c *CPU) SetA(val uint8) {
 	c.A = val
 }
@@ -135,6 +119,9 @@ func (c *CPU) FetchExecute() {
 	case 0x02, 0x12, 0x22, 0x32:
 		// LD [r16mem], A
 		c.LdMem8(opcode)
+	case 0xE2:
+		// LDH [C], A
+		// c.InstrLd8()
 	case 0x76:
 		c.halt = true
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:

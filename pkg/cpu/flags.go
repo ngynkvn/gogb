@@ -41,3 +41,19 @@ func (c *CPU) SetC(set bool) {
 		c.F = c.F & ^uint8(1<<4)
 	}
 }
+
+func (c *CPU) AF() uint16 {
+	return (uint16(c.A) << 8) | (uint16(c.F))
+}
+
+func (c *CPU) BC() uint16 {
+	return (uint16(c.B) << 8) | (uint16(c.C))
+}
+
+func (c *CPU) DE() uint16 {
+	return (uint16(c.D) << 8) | (uint16(c.E))
+}
+
+func (c *CPU) HL() uint16 {
+	return (uint16(c.H) << 8) | (uint16(c.L))
+}
