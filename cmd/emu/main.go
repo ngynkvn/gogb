@@ -2,16 +2,15 @@ package main
 
 import (
 	"gogb/pkg/cpu"
+	"gogb/pkg/log"
 	"gogb/pkg/mem"
 	"log/slog"
 	"os"
-
-	"github.com/lmittmann/tint"
 )
 
 func main() {
 
-	slog.SetDefault(slog.New(tint.NewHandler(os.Stderr, nil)))
+	log.Init()
 
 	slog.Info("Hello!")
 	if len(os.Args) < 2 {
@@ -24,6 +23,7 @@ func main() {
 		slog.Error("err: %s", err)
 		os.Exit(1)
 	}
+	slog.Info("bytes read!", "n", len(bytes))
 
 	mem := mem.NewRAM()
 	mem.Copy(bytes, 0)

@@ -1,16 +1,16 @@
 package cpu
 
 func (c *CPU) F_Z() bool {
-	return (c.F & 1 << uint8(7)) > 0
+	return (c.F & (1 << 7)) > 0
 }
 func (c *CPU) F_N() bool {
-	return (c.F & 1 << uint8(6)) > 0
+	return (c.F & (1 << 6)) > 0
 }
 func (c *CPU) F_H() bool {
-	return (c.F & 1 << uint8(5)) > 0
+	return (c.F & (1 << 5)) > 0
 }
 func (c *CPU) F_C() bool {
-	return (c.F & 1 << uint8(4)) > 0
+	return (c.F & (1 << 4)) > 0
 }
 
 func (c *CPU) SetZ(set bool) {

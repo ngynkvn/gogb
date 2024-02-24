@@ -169,7 +169,6 @@ func (c *CPU) BIT(opcode uint8) {
 	c.SetZ((val>>b3)&1 == 0)
 	c.SetN(false)
 	c.SetH(true)
-
 }
 func (c *CPU) RES(opcode uint8) {
 	dst := opcode & 0b111
