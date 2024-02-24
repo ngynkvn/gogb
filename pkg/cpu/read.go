@@ -24,7 +24,7 @@ func (c *CPU) Location(reg uint8) *uint8 {
 }
 
 func SplitU16(value uint16) (uint8, uint8) {
-	return uint8(value >> 8), uint8(value & 0xF)
+	return uint8(value >> 8), uint8(value & 0b1111_1111)
 }
 
 func (c *CPU) SetR8(reg uint8) func(uint8) {

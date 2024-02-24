@@ -30,7 +30,8 @@ func main() {
 
 	cpu := cpu.NewCPU(&mem)
 
-	for i := 0; i < 100; i++ {
+	for {
 		cpu.FetchExecute()
+		// time.Sleep(time.Second / 100)
 	}
 }

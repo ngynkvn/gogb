@@ -3,6 +3,7 @@ package cpu
 import (
 	"fmt"
 	"gogb/pkg/mem"
+	"log/slog"
 )
 
 // https://gbdev.io/gb-opcodes//optables/
@@ -99,6 +100,7 @@ func (c *CPU) FetchExecute() {
 		return
 	}
 	opcode := c.ReadU8(c.PC)
+	slog.Debug(fmt.Sprintf("%#04x:%#02x %10s", c.PC-1, opcode, INSTR_NAME[opcode]))
 	// add todo:['0x08', '0xF2', '0xF8', '0xF9']
 	switch opcode {
 	case 0x00:
@@ -120,8 +122,10 @@ func (c *CPU) FetchExecute() {
 		// LD [r16mem], A
 		c.LdMem8(opcode)
 	case 0xE2:
-		// LDH [C], A
-		// c.InstrLd8()
+		// LD [C], A
+		val := c.A
+		pos := 0xFF00 + uint16(c.C)
+		*c.ram.Ptr(pos) = val
 	case 0x76:
 		c.halt = true
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
@@ -172,18 +176,17 @@ func (c *CPU) FetchExecute() {
 	case 0x0A, 0x1A, 0x2A, 0x3A:
 		// LD A, [mem]
 		c.InstrLd8(c.SetA, c.ReadU8(c.FetchR16Mem((opcode>>3)&0b11)))
-
 	case 0x18, 0x20, 0x28, 0x30, 0x38:
 		// JR
+		c.Jr(opcode)
+	case 0xC2, 0xC3, 0xCA, 0xD2, 0xDA, 0xE9:
+		// JP
 		fallthrough
 	case 0xC0, 0xC8, 0xC9, 0xD0, 0xD8:
 		// RET
 		fallthrough
 	case 0xC1, 0xD1, 0xE1, 0xF1:
 		// POP
-		fallthrough
-	case 0xC2, 0xC3, 0xCA, 0xD2, 0xDA, 0xE9:
-		// JP
 		fallthrough
 	case 0xC4, 0xCC, 0xCD, 0xD4, 0xDC:
 		// CALL
@@ -196,19 +199,57 @@ func (c *CPU) FetchExecute() {
 		fallthrough
 	case 0x07:
 		// RLCA
-		fallthrough
+		val := c.A
+		result := uint8(val<<1) | uint8((val&1)>>7)
+		c.A = result
+
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(val > 0x7F)
 	case 0x0F:
 		// RRCA
-		fallthrough
+		val := c.A
+		result := byte(val>>1) | byte((val&1)<<7)
+		c.A = result
+
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(result > 0x7F)
 	case 0x10:
 		// STOP
-		fallthrough
+		c.halt = true
+		_ = c.ReadU8(c.PC)
 	case 0x17:
 		// RLA
+		val := c.A
+		var carry uint8
+		if c.F_C() {
+			carry = 0b1
+		}
+		result := uint8(val<<1) | carry
+
+		c.A = result
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(val > 0x7F)
 		fallthrough
 	case 0x1F:
 		// RRA
-		fallthrough
+		val := c.A
+		var carry uint8
+		if c.F_C() {
+			carry = 0b1000_0000
+		}
+		result := uint8(val>>1) | carry
+		c.A = result
+
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC((val & 1) == 1)
 	case 0x27:
 		// DAA
 		fallthrough
@@ -251,9 +292,17 @@ func (c *CPU) FetchExecute() {
 	case 0xD9:
 		// RETI
 		fallthrough
-	case 0xE0, 0xF0:
-		// LDH
-		fallthrough
+	case 0xE0:
+		// LDH [a8], A
+		arg := c.ReadU8(c.PC)
+		val := c.A
+		pos := 0xFF00 + uint16(arg)
+		*c.ram.Ptr(pos) = val
+	case 0xF0:
+		arg := c.A
+		val := c.ReadU8(c.PC)
+		pos := 0xFF00 + uint16(arg)
+		*c.ram.Ptr(pos) = val
 	case 0xF3:
 		// DI
 		fallthrough
@@ -303,8 +352,9 @@ func (c *CPU) FetchExecute() {
 func (c *CPU) Dump() string {
 	return fmt.Sprintf(
 		`AF: %04X
-BC: %04X
-DE: %04X
-SP: %04X
-PC: %04X`, c.AF(), c.BC(), c.DE(), c.SP, c.PC)
+BC: %#04x
+DE: %#04x
+HL: %#04x
+SP: %#04x
+PC: %#04x`, c.AF(), c.BC(), c.DE(), c.HL(), c.SP, c.PC)
 }
