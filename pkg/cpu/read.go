@@ -143,15 +143,24 @@ func (c *CPU) FetchR8(reg uint8) uint8 {
 // Read u8 from memory, incur +1 cycle
 func (c *CPU) ReadU8(pos uint16) uint8 {
 	c.cycle += 1
-	c.PC += 1
 	return c.ram.ReadU8(pos)
 }
 
 // Read u16 from memory, incur +2 cycle
 func (c *CPU) ReadU16(pos uint16) uint16 {
 	c.cycle += 2
-	c.PC += 2
 	return c.ram.ReadU16(pos)
+}
+
+func (c *CPU) ReadU8Imm() uint8 {
+	result := c.ram.ReadU8(c.PC)
+	c.PC += 1
+	return result
+}
+func (c *CPU) ReadU16Imm() uint16 {
+	result := c.ram.ReadU16(c.PC)
+	c.PC += 2
+	return result
 }
 
 func (c *CPU) MemSet8(pos uint16) func(uint8) {

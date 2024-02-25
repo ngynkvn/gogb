@@ -6,7 +6,7 @@ func (c *CPU) Add(opcode uint8, addCarry bool) {
 	c.InstrAdd(c.SetA, c.A, c.FetchR8(src), addCarry)
 }
 func (c *CPU) AddImm8(addCarry bool) {
-	c.InstrAdd(c.SetA, c.A, c.ReadU8(c.PC), addCarry)
+	c.InstrAdd(c.SetA, c.A, c.ReadU8Imm(), addCarry)
 }
 
 // TODO: test this
@@ -15,7 +15,7 @@ func (c *CPU) Sub(opcode uint8, addCarry bool) {
 	c.InstrSub(c.SetA, c.A, c.FetchR8(src), addCarry)
 }
 func (c *CPU) SubImm8(addCarry bool) {
-	c.InstrSub(c.SetA, c.A, c.ReadU8(c.PC), addCarry)
+	c.InstrSub(c.SetA, c.A, c.ReadU8Imm(), addCarry)
 }
 
 // TODO: test this
@@ -27,7 +27,7 @@ func (c *CPU) And(opcode uint8) {
 }
 
 func (c *CPU) AndImm8() {
-	val := c.ReadU8(c.PC)
+	val := c.ReadU8Imm()
 	c.InstrAnd(c.SetA, c.A, val)
 }
 
@@ -38,7 +38,7 @@ func (c *CPU) Or(opcode uint8) {
 	c.InstrOr(c.SetA, c.A, val)
 }
 func (c *CPU) OrImm8() {
-	val := c.ReadU8(c.PC)
+	val := c.ReadU8Imm()
 	c.InstrOr(c.SetA, c.A, val)
 }
 
@@ -48,7 +48,7 @@ func (c *CPU) Xor(opcode uint8) {
 	c.InstrXor(c.SetA, c.A, val)
 }
 func (c *CPU) XorImm8() {
-	val := c.ReadU8(c.PC)
+	val := c.ReadU8Imm()
 	c.InstrXor(c.SetA, c.A, val)
 }
 
@@ -59,7 +59,7 @@ func (c *CPU) Cp(opcode uint8) {
 	c.InstrCp(c.SetA, c.A, val)
 }
 func (c *CPU) CpImm8() {
-	val := c.ReadU8(c.PC)
+	val := c.ReadU8Imm()
 	c.InstrCp(c.SetA, c.A, val)
 }
 

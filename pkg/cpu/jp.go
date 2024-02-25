@@ -7,7 +7,7 @@ import (
 
 func (c *CPU) Jr(opcode uint8) {
 	condition := (opcode >> 3) & 0b111
-	next := int8(c.ReadU8(c.PC))
+	next := int8(c.ReadU8Imm())
 	var pos = int32(c.PC)
 	targetAddr := int32(c.PC) + int32(next)
 

@@ -99,8 +99,10 @@ func (c *CPU) FetchExecute() {
 	if c.halt {
 		return
 	}
-	opcode := c.ReadU8(c.PC)
-	slog.Debug(fmt.Sprintf("%#04x:%#02x %10s", c.PC-1, opcode, INSTR_NAME[opcode]))
+	opcode := c.ReadU8Imm()
+	if c.PC > 0x0b {
+		slog.Info(fmt.Sprintf("%#04x:%#02x %10s", c.PC-1, opcode, INSTR_NAME[opcode]))
+	}
 	// add todo:['0x08', '0xF2', '0xF8', '0xF9']
 	switch opcode {
 	case 0x00:
@@ -168,35 +170,35 @@ func (c *CPU) FetchExecute() {
 		c.Dec8(opcode)
 	case 0x09, 0x19, 0x29, 0x39:
 		// ADD HL, r16
-		c.InstrAdd16(c.SetHL, c.HL(), c.FetchR16((opcode>>3)&0b11), false)
+		c.InstrAdd16(c.SetHL, c.HL(), c.FetchR16((opcode>>4)&0b11), false)
 	case 0x06, 0x16, 0x26, 0x36,
 		0x0E, 0x1E, 0x2E, 0x3E:
 		// LD r8, n8
-		c.InstrLd8(c.SetR8((opcode>>3)&0b111), c.ReadU8(c.PC))
+		c.InstrLd8(c.SetR8((opcode>>3)&0b111), c.ReadU8Imm())
 	case 0x0A, 0x1A, 0x2A, 0x3A:
 		// LD A, [mem]
-		c.InstrLd8(c.SetA, c.ReadU8(c.FetchR16Mem((opcode>>3)&0b11)))
+		c.InstrLd8(c.SetA, c.ReadU8(c.FetchR16Mem((opcode>>4)&0b11)))
 	case 0x18, 0x20, 0x28, 0x30, 0x38:
 		// JR
 		c.Jr(opcode)
 	case 0xC2, 0xC3, 0xCA, 0xD2, 0xDA, 0xE9:
 		// JP
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xC0, 0xC8, 0xC9, 0xD0, 0xD8:
 		// RET
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xC1, 0xD1, 0xE1, 0xF1:
 		// POP
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xC4, 0xCC, 0xCD, 0xD4, 0xDC:
 		// CALL
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xC5, 0xD5, 0xE5, 0xF5:
 		// PUSH
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF:
 		// RST
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0x07:
 		// RLCA
 		val := c.A
@@ -220,7 +222,7 @@ func (c *CPU) FetchExecute() {
 	case 0x10:
 		// STOP
 		c.halt = true
-		_ = c.ReadU8(c.PC)
+		_ = c.ReadU8Imm()
 	case 0x17:
 		// RLA
 		val := c.A
@@ -251,16 +253,16 @@ func (c *CPU) FetchExecute() {
 		c.SetC((val & 1) == 1)
 	case 0x27:
 		// DAA
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0x2F:
 		// CPL
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0x37:
 		// SCF
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0x3F:
 		// CCF
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xC6:
 		// ADD A, n8
 		c.AddImm8(false)
@@ -287,65 +289,69 @@ func (c *CPU) FetchExecute() {
 		c.CpImm8()
 	case 0xCB:
 		// PREFIX
-		c.CB(c.ReadU8(c.PC))
+		c.CB(c.ReadU8Imm())
 	case 0xD9:
 		// RETI
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xE0:
 		// LDH [a8], A
-		arg := c.ReadU8(c.PC)
+		arg := c.ReadU8Imm()
 		val := c.A
 		pos := 0xFF00 + uint16(arg)
 		*c.ram.Ptr(pos) = val
 	case 0xF0:
 		arg := c.A
-		val := c.ReadU8(c.PC)
+		val := c.ReadU8Imm()
 		pos := 0xFF00 + uint16(arg)
 		*c.ram.Ptr(pos) = val
 	case 0xF3:
 		// DI
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xFB:
 		// EI
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xD3:
 		// ILLEGAL_D3
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xDB:
 		// ILLEGAL_DB
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xDD:
 		// ILLEGAL_DD
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xE3:
 		// ILLEGAL_E3
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xE4:
 		// ILLEGAL_E4
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xEB:
 		// ILLEGAL_EB
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xEC:
 		// ILLEGAL_EC
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xED:
 		// ILLEGAL_ED
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xF4:
 		// ILLEGAL_F4
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xFC:
 		// ILLEGAL_FC
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xFD:
 		// ILLEGAL_FD
-		fallthrough
+		unimplementedOp(c, opcode)
 	default:
-		fmt.Printf("%s\n", c.Dump())
-		fmt.Printf("\n\nunimplemented:%s\t%#x\n", INSTR_NAME[opcode], opcode)
-		panic("unimplemented")
+		unimplementedOp(c, opcode)
 	}
+}
+
+func unimplementedOp(c *CPU, opcode uint8) {
+	fmt.Printf("%s\n", c.Dump())
+	fmt.Printf("\n\nunimplemented:%s\t%#x\n", INSTR_NAME[opcode], opcode)
+	panic("unimplemented")
 }
 
 func (c *CPU) Dump() string {
