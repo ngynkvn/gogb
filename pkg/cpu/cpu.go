@@ -235,7 +235,6 @@ func (c *CPU) FetchExecute() {
 		c.SetN(false)
 		c.SetH(false)
 		c.SetC(val > 0x7F)
-		fallthrough
 	case 0x1F:
 		// RRA
 		val := c.A

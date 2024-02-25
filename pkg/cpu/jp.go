@@ -29,14 +29,12 @@ func (c *CPU) Jr(opcode uint8) {
 	case 0b101:
 		// Z
 		if c.F_Z() {
-
 			pos = targetAddr
 			c.cycle++
 		}
 	case 0b110:
 		// NC
 		if !c.F_C() {
-
 			pos = targetAddr
 			c.cycle++
 		}
