@@ -189,13 +189,13 @@ func (c *CPU) FetchExecute() {
 		unimplementedOp(c, opcode)
 	case 0xC1, 0xD1, 0xE1, 0xF1:
 		// POP
-		unimplementedOp(c, opcode)
+		c.POP(opcode)
 	case 0xC4, 0xCC, 0xCD, 0xD4, 0xDC:
 		// CALL
-		unimplementedOp(c, opcode)
+		c.CALL(opcode)
 	case 0xC5, 0xD5, 0xE5, 0xF5:
 		// PUSH
-		unimplementedOp(c, opcode)
+		c.PUSH(opcode)
 	case 0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF:
 		// RST
 		unimplementedOp(c, opcode)

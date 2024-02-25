@@ -1,5 +1,7 @@
 package mem
 
+import "gogb/pkg/bytes"
+
 type RAM struct {
 	memory [0x10000]byte
 }
@@ -16,6 +18,12 @@ func (r *RAM) Copy(bytes []byte, pos int) int {
 
 func (r *RAM) ReadU8(pos uint16) uint8 {
 	return r.memory[pos]
+}
+
+func (r *RAM) WriteU16(pos uint16, value uint16) {
+	hi, lo := bytes.SplitU16(value)
+	r.memory[pos] = lo
+	r.memory[pos+1] = hi
 }
 
 func (r *RAM) Ptr(pos uint16) *uint8 {

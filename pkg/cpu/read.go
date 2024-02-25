@@ -1,5 +1,7 @@
 package cpu
 
+import "gogb/pkg/bytes"
+
 func (c *CPU) Location(reg uint8) *uint8 {
 	switch reg {
 	case 0:
@@ -23,13 +25,35 @@ func (c *CPU) Location(reg uint8) *uint8 {
 	}
 }
 
-func SplitU16(value uint16) (uint8, uint8) {
-	return uint8(value >> 8), uint8(value & 0b1111_1111)
-}
-
 func (c *CPU) SetR8(reg uint8) func(uint8) {
 	return func(u uint8) {
 		*c.Location(reg) = u
+	}
+}
+
+func (c *CPU) Set16Stk(dst uint8, value uint16) {
+	switch dst {
+	case 0:
+		hiDst, loDst := &c.B, &c.C
+		hi, lo := bytes.SplitU16(value)
+		*hiDst = hi
+		*loDst = lo
+	case 1:
+		hiDst, loDst := &c.D, &c.E
+		hi, lo := bytes.SplitU16(value)
+		*hiDst = hi
+		*loDst = lo
+	case 2:
+		hiDst, loDst := &c.H, &c.L
+		hi, lo := bytes.SplitU16(value)
+		*hiDst = hi
+		*loDst = lo
+	case 3:
+		hi, lo := bytes.SplitU16(value)
+		c.A = hi
+		c.F = lo
+	default:
+		panic("Out of range")
 	}
 }
 
@@ -37,17 +61,17 @@ func (c *CPU) Set16(dst uint8, value uint16) {
 	switch dst {
 	case 0:
 		hiDst, loDst := &c.B, &c.C
-		hi, lo := SplitU16(value)
+		hi, lo := bytes.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 1:
 		hiDst, loDst := &c.D, &c.E
-		hi, lo := SplitU16(value)
+		hi, lo := bytes.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 2:
 		hiDst, loDst := &c.H, &c.L
-		hi, lo := SplitU16(value)
+		hi, lo := bytes.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 3:
