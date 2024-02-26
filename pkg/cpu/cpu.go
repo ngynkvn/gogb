@@ -292,9 +292,9 @@ func (c *CPU) FetchExecute() {
 		}
 		switch subtract {
 		case true:
-			c.A = c.A + offset
-		case false:
 			c.A = c.A - offset
+		case false:
+			c.A = c.A + offset
 		}
 		c.SetZ(c.A == 0)
 		// --
