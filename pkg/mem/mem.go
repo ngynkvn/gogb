@@ -2,7 +2,7 @@ package mem
 
 import (
 	"fmt"
-	"gogb/pkg/bytes"
+	"gogb/pkg/bits"
 	"log"
 )
 
@@ -41,7 +41,7 @@ func (r *RAM) ReadU8(pos uint16) uint8 {
 }
 
 func (r *RAM) WriteU16(pos uint16, value uint16) {
-	hi, lo := bytes.SplitU16(value)
+	hi, lo := bits.SplitU16(value)
 	r.memory[pos] = lo
 	r.memory[pos+1] = hi
 }

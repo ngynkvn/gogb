@@ -1,6 +1,6 @@
 package cpu
 
-import "gogb/pkg/bytes"
+import "gogb/pkg/bits"
 
 func (c *CPU) Location(reg uint8) *uint8 {
 	switch reg {
@@ -35,21 +35,21 @@ func (c *CPU) Set16Stk(dst uint8, value uint16) {
 	switch dst {
 	case 0:
 		hiDst, loDst := &c.B, &c.C
-		hi, lo := bytes.SplitU16(value)
+		hi, lo := bits.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 1:
 		hiDst, loDst := &c.D, &c.E
-		hi, lo := bytes.SplitU16(value)
+		hi, lo := bits.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 2:
 		hiDst, loDst := &c.H, &c.L
-		hi, lo := bytes.SplitU16(value)
+		hi, lo := bits.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 3:
-		hi, lo := bytes.SplitU16(value)
+		hi, lo := bits.SplitU16(value)
 		c.A = hi
 		c.F = lo & 0xF0
 	default:
@@ -61,17 +61,17 @@ func (c *CPU) Set16(dst uint8, value uint16) {
 	switch dst {
 	case 0:
 		hiDst, loDst := &c.B, &c.C
-		hi, lo := bytes.SplitU16(value)
+		hi, lo := bits.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 1:
 		hiDst, loDst := &c.D, &c.E
-		hi, lo := bytes.SplitU16(value)
+		hi, lo := bits.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 2:
 		hiDst, loDst := &c.H, &c.L
-		hi, lo := bytes.SplitU16(value)
+		hi, lo := bits.SplitU16(value)
 		*hiDst = hi
 		*loDst = lo
 	case 3:
