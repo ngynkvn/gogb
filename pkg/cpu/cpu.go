@@ -283,6 +283,27 @@ func (c *CPU) FetchExecute() {
 		c.SetN(false)
 		c.SetH(false)
 		c.SetC(!c.F_C())
+	case 0xFA:
+		// LD A, [a16]
+		c.A = c.ReadU8(c.ReadU16Imm())
+	case 0xF9:
+		// LD SP, HL
+		c.SP = c.HL()
+	case 0xEA:
+		// LD [a16], A
+		c.WriteU8(c.ReadU16Imm(), c.A)
+	case 0xE8:
+		// ADD SP, e8
+		a, b := c.SP, int8(c.ReadU8Imm())
+		result := uint16(int32(a) + int32(b))
+		c.SetSP(uint16(result))
+
+		c.SetZ(false)
+		c.SetN(false)
+		// idk
+		tmpVal := a ^ uint16(b) ^ result
+		c.SetH(tmpVal&0x10 == 0x10)
+		c.SetC(tmpVal&0x100 == 0x100)
 	case 0xC6:
 		// ADD A, n8
 		c.AddImm8(false)
