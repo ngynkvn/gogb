@@ -198,7 +198,7 @@ func (c *CPU) FetchExecute() {
 	case 0x07:
 		// RLCA
 		val := c.A
-		result := uint8(val<<1) | uint8((val&1)>>7)
+		result := (val << 1) | (val >> 7)
 		c.A = result
 
 		c.SetZ(false)
@@ -208,7 +208,7 @@ func (c *CPU) FetchExecute() {
 	case 0x0F:
 		// RRCA
 		val := c.A
-		result := byte(val>>1) | byte((val&1)<<7)
+		result := (val >> 1) | ((val & 1) << 7)
 		c.A = result
 
 		c.SetZ(false)
@@ -218,7 +218,6 @@ func (c *CPU) FetchExecute() {
 	case 0x10:
 		// STOP
 		c.halt = true
-		_ = c.ReadU8Imm()
 	case 0x17:
 		// RLA
 		val := c.A

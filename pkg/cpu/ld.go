@@ -8,7 +8,7 @@ func (c *CPU) Ld(opcode uint8) {
 }
 
 func (c *CPU) Ld16(opcode uint8) {
-	dst := (opcode >> 3) & 0b11
+	dst := (opcode >> 4) & 0b11
 	c.Set16(dst, c.ReadU16Imm())
 }
 

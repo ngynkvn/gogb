@@ -56,11 +56,11 @@ func (c *CPU) Cp(opcode uint8) {
 
 	src := opcode & 0b111
 	val := c.FetchR8(src)
-	c.InstrCp(c.SetA, c.A, val)
+	c.InstrCp(c.A, val)
 }
 func (c *CPU) CpImm8() {
 	val := c.ReadU8Imm()
-	c.InstrCp(c.SetA, c.A, val)
+	c.InstrCp(c.A, val)
 }
 
 func (c *CPU) Inc8(opcode uint8) {
@@ -81,7 +81,7 @@ func (c *CPU) Dec8(opcode uint8) {
 	result := val - 1
 
 	c.SetZ(result == 0)
-	c.SetN(false)
+	c.SetN(true)
 	c.SetH((val & 0xF) == 0x0)
 
 	*c.Location(dst) = result
@@ -99,7 +99,7 @@ func (c *CPU) InstrAdd16(set func(uint16), a uint16, b uint16, addCarry bool) {
 }
 
 func (c *CPU) Inc16(opcode uint8) {
-	dst := (opcode >> 3) & 0b11
+	dst := (opcode >> 4) & 0b11
 	val := c.FetchR16(dst)
 	result := val + 1
 
@@ -107,7 +107,7 @@ func (c *CPU) Inc16(opcode uint8) {
 }
 
 func (c *CPU) Dec16(opcode uint8) {
-	dst := (opcode >> 3) & 0b11
+	dst := (opcode >> 4) & 0b11
 	val := c.FetchR16(dst)
 	result := val - 1
 
@@ -172,15 +172,13 @@ func (c *CPU) InstrOr(set func(uint8), a uint8, b uint8) {
 }
 
 // TODO: test this
-func (c *CPU) InstrCp(set func(uint8), a uint8, b uint8) {
+func (c *CPU) InstrCp(a uint8, b uint8) {
 	result := a - b
 
 	c.SetZ(result == 0)
 	c.SetN(true)
 	c.SetH((a & 0xF) > (b & 0xF))
 	c.SetC(a > b)
-
-	set(result)
 }
 
 func B(b bool) int {
