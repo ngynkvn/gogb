@@ -267,7 +267,30 @@ func (c *CPU) FetchExecute() {
 		c.SetC((val & 1) == 1)
 	case 0x27:
 		// DAA
-		unimplementedOp(c, opcode)
+		offset := uint8(0)
+		should_carry := false
+		val := c.A
+		hc := c.F_H()
+		carry := c.F_C()
+		subtract := c.F_N()
+		if (!subtract && (val&0xF) > 0x09) || hc {
+			offset |= 0x06
+		}
+
+		if (!subtract && val > 0x99) || carry {
+			offset |= 0x60
+			should_carry = true
+		}
+		switch subtract {
+		case true:
+			c.A = c.A + offset
+		case false:
+			c.A = c.A - offset
+		}
+		c.SetZ(c.A == 0)
+		// --
+		c.SetH(false)
+		c.SetC(should_carry)
 	case 0x2F:
 		// CPL
 		c.A = c.A ^ 0xFF
