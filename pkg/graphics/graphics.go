@@ -209,14 +209,14 @@ func (d *Display) RenderTiles(scanline uint8) {
 		yPos = scrollY + ly
 	}
 
-	tileRow := (yPos / 8) * 32
+	tileRow := uint16(yPos/8) * 32
 
 	for p := uint8(0); p < 160; p++ {
 		xPos := p + scrollX
 		if usingWindow && p >= windowX {
 			xPos = p - windowX
 		}
-		tileCol := xPos / 8
+		tileCol := uint16(xPos / 8)
 		tileAddr := tileRow + tileCol
 		tileNum := bgArea[tileAddr]
 		tileLocation := baseTileAddr
