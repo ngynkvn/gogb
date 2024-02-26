@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"fmt"
+	"gogb/pkg/graphics"
 	"gogb/pkg/mem"
 )
 
@@ -72,9 +73,10 @@ var INSTR_NAME = [256]string{
 }
 
 type CPU struct {
-	ram    *mem.RAM
-	halt   bool
-	CycleM uint
+	ram     *mem.RAM
+	display *graphics.Display
+	halt    bool
+	CycleM  uint
 	// stop   bool
 
 	A, F, B, C, D, E uint8
@@ -88,9 +90,10 @@ type CPU struct {
 	DIV        uint
 }
 
-func NewCPU(mem *mem.RAM) *CPU {
+func NewCPU(mem *mem.RAM, display *graphics.Display) *CPU {
 	cpu := CPU{
-		ram: mem,
+		ram:     mem,
+		display: display,
 	}
 	return &cpu
 }
@@ -118,6 +121,7 @@ func (c *CPU) Update() {
 		c.EI_QUEUED = false
 	}
 	opCycles := c.FetchExecute()
+	c.Graphics(opCycles)
 	c.Timer(opCycles)
 	c.CycleM += c.Interrupts()
 }

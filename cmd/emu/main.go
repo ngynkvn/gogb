@@ -2,6 +2,7 @@ package main
 
 import (
 	"gogb/pkg/cpu"
+	"gogb/pkg/graphics"
 	"gogb/pkg/log"
 	"gogb/pkg/mem"
 	"log/slog"
@@ -33,7 +34,8 @@ func main() {
 	}
 	mem.Copy(bytes, 0)
 
-	cpu := cpu.NewCPU(&mem)
+	display := graphics.NewDisplay(mem)
+	cpu := cpu.NewCPU(mem, display)
 	// TODO
 	cpu.SkipBootRom()
 

@@ -13,8 +13,8 @@ type RAM struct {
 	serial  bytes.Buffer
 }
 
-func NewRAM() RAM {
-	return RAM{
+func NewRAM() *RAM {
+	return &RAM{
 		bootrom: [0x100]byte{},
 		memory:  [0x10000]byte{},
 	}
@@ -33,6 +33,10 @@ func (r *RAM) CopyBootRom(rom []byte) {
 
 func (r *RAM) Copy(bytes []byte, pos int) int {
 	return copy(r.memory[pos:], bytes)
+}
+
+func (r *RAM) Slice(from int, to int) []byte {
+	return r.memory[from : to+1]
 }
 
 func (r *RAM) ReadU8(pos uint16) uint8 {
