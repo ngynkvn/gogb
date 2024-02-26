@@ -1,15 +1,9 @@
 package cpu
 
-import (
-	"fmt"
-	"log/slog"
-)
-
-// TODO: paranoid mode
 func (c *CPU) CALL(opcode uint8) {
 	condition := (opcode >> 3) & 0b11
 	targetAddr := c.ReadU16Imm()
-	var pos = c.PC
+	pos := c.PC
 	switch {
 	// Always
 	case (opcode == 0b110_01_101):
@@ -41,17 +35,11 @@ func (c *CPU) CALL(opcode uint8) {
 	c.PC = pos
 }
 
-// TODO: paranoid mode
 func (c *CPU) Jr(opcode uint8) {
 	condition := (opcode >> 3) & 0b111
 	next := int8(c.ReadU8Imm())
 	var pos = int32(c.PC)
 	targetAddr := int32(c.PC) + int32(next)
-
-	// TODO: Debug Levels?
-	slog.Debug(fmt.Sprintf("%#04x", pos))
-	slog.Debug(fmt.Sprintf("%#02x", next))
-	slog.Debug(fmt.Sprintf("%#04x", targetAddr))
 
 	switch {
 	case condition == 0b011:
@@ -71,6 +59,70 @@ func (c *CPU) Jr(opcode uint8) {
 		c.cycle++
 	}
 	c.PC = uint16(pos)
+}
+
+func (c *CPU) JP(opcode uint8) {
+	cond := (opcode >> 3) & 0b11
+	// TODO: refactor
+	if (opcode&1) == 1 && cond == 0b01 {
+		// JP HL
+		c.PC = c.HL()
+		return
+	}
+
+	target := c.ReadU16Imm()
+	pos := c.PC
+	switch {
+	case (opcode & 0b111) == 0b011:
+		//Always
+		pos = target
+		c.cycle += 1
+	case cond == 0 && !c.F_Z():
+		pos = target
+		c.cycle += 1
+	case cond == 1 && c.F_Z():
+		pos = target
+		c.cycle += 1
+	case cond == 2 && !c.F_C():
+		pos = target
+		c.cycle += 1
+	case cond == 3 && c.F_C():
+		pos = target
+		c.cycle += 1
+	}
+	c.PC = uint16(pos)
+}
+
+func (c *CPU) RET(opcode uint8) {
+	cond := (opcode >> 3) & 0b11
+	pos := c.PC
+	switch {
+	case opcode&1 == 1:
+		// Always
+		pos = c.ReadU16(c.SP)
+		c.SP += 2
+		c.cycle += 1
+	case cond == 0 && !c.F_Z():
+		pos = c.ReadU16(c.SP)
+		c.SP += 2
+		c.cycle += 1
+	case cond == 1 && c.F_Z():
+		pos = c.ReadU16(c.SP)
+		c.SP += 2
+		c.cycle += 1
+	case cond == 2 && !c.F_C():
+		pos = c.ReadU16(c.SP)
+		c.SP += 2
+		c.cycle += 1
+	case cond == 3 && c.F_C():
+		pos = c.ReadU16(c.SP)
+		c.SP += 2
+		c.cycle += 1
+	}
+	c.PC = pos
+}
+
+func (c *CPU) RETI(opcode uint8) {
 }
 
 func (c *CPU) RST(opcode uint8) {

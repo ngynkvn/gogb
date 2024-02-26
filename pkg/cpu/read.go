@@ -51,7 +51,7 @@ func (c *CPU) Set16Stk(dst uint8, value uint16) {
 	case 3:
 		hi, lo := bytes.SplitU16(value)
 		c.A = hi
-		c.F = lo
+		c.F = lo & 0xF0
 	default:
 		panic("Out of range")
 	}

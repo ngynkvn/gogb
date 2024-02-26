@@ -133,12 +133,14 @@ func (c *CPU) FetchExecute() {
 		c.SetA(c.ReadU8(pos))
 	case 0xF8:
 		// LD HL, SP + e8
-		a, b := int16(c.SP), int16(int8(c.ReadU8Imm()))
-		result := int32(a) + int32(b)
+		a, b := c.SP, int8(c.ReadU8Imm())
+		result := uint16(int32(a) + int32(b))
 		c.SetZ(false)
 		c.SetN(false)
-		c.SetH(((a & 0xFFF) + (b & 0xFFF)) > 0xFFF)
-		c.SetC(result > 0xFFFF)
+		// idk
+		tmpVal := a ^ uint16(b) ^ result
+		c.SetH(tmpVal&0x10 == 0x10)
+		c.SetH(tmpVal&0x100 == 0x100)
 		c.SetHL(uint16(result))
 	case 0x76:
 		c.halt = true
@@ -195,10 +197,10 @@ func (c *CPU) FetchExecute() {
 		c.Jr(opcode)
 	case 0xC2, 0xC3, 0xCA, 0xD2, 0xDA, 0xE9:
 		// JP
-		unimplementedOp(c, opcode)
+		c.JP(opcode)
 	case 0xC0, 0xC8, 0xC9, 0xD0, 0xD8:
 		// RET
-		unimplementedOp(c, opcode)
+		c.RET(opcode)
 	case 0xC4, 0xCC, 0xCD, 0xD4, 0xDC:
 		// CALL
 		c.CALL(opcode)
@@ -303,25 +305,30 @@ func (c *CPU) FetchExecute() {
 		c.CB(c.ReadU8Imm())
 	case 0xD9:
 		// RETI
-		unimplementedOp(c, opcode)
+		pos := c.ReadU16(c.SP)
+		c.SP += 2
+		c.PC = pos
+		c.interrupts = true
 	case 0xE0:
 		// LDH [a8], A
-		arg := c.ReadU8Imm()
+		a8 := c.ReadU8Imm()
+		pos := 0xFF00 + uint16(a8)
+
 		val := c.A
-		pos := 0xFF00 + uint16(arg)
 		c.WriteU8(pos, val)
 	case 0xF0:
 		// LDH A, [a8]
-		arg := c.A
-		val := c.ReadU8Imm()
-		pos := 0xFF00 + uint16(arg)
-		c.WriteU8(pos, val)
+		a8 := c.ReadU8Imm()
+		pos := 0xFF00 + uint16(a8)
+
+		val := c.ReadU8(pos)
+		c.SetA(val)
 	case 0xF3:
 		// DI
-		unimplementedOp(c, opcode)
+		c.interrupts = false
 	case 0xFB:
 		// EI
-		unimplementedOp(c, opcode)
+		c.interrupts = true
 	case 0xD3:
 		// ILLEGAL_D3
 		unimplementedOp(c, opcode)

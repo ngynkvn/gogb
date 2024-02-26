@@ -48,10 +48,10 @@ func TestSM83(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NoError(t, json.Unmarshal(bytes, &tcs))
 			for _, tc := range tcs {
-				t.Run(tc.Name, func(t *testing.T) {
+				t.Run(tc.Name, func(tt *testing.T) {
 					defer func() {
 						if r := recover(); r != nil {
-							t.Errorf("Failed, panicked")
+							t.Fatalf("Failed, panicked")
 						}
 					}()
 					// TODO: Mock ram
@@ -77,16 +77,23 @@ func TestSM83(t *testing.T) {
 
 					cpu.FetchExecute()
 
-					assert.Equal(t, final.A, cpu.A, "A")
-					assert.Equal(t, final.B, cpu.B, "B")
-					assert.Equal(t, final.C, cpu.C, "C")
-					assert.Equal(t, final.D, cpu.D, "D")
-					assert.Equal(t, final.E, cpu.E, "E")
-					assert.Equal(t, final.F, cpu.F, "F")
-					assert.Equal(t, final.H, cpu.H, "H")
-					assert.Equal(t, final.L, cpu.L, "L")
-					assert.Equal(t, final.SP, cpu.SP, "SP")
-					assert.Equal(t, final.PC, cpu.PC, "PC")
+					assert.Equal(tt, final.A, cpu.A, "A")
+					assert.Equal(tt, final.B, cpu.B, "B")
+					assert.Equal(tt, final.C, cpu.C, "C")
+					assert.Equal(tt, final.D, cpu.D, "D")
+					assert.Equal(tt, final.E, cpu.E, "E")
+					assert.Equal(tt, final.F, cpu.F, "F")
+					assert.Equal(tt, final.H, cpu.H, "H")
+					assert.Equal(tt, final.L, cpu.L, "L")
+					assert.Equal(tt, final.SP, cpu.SP, "SP")
+					assert.Equal(tt, final.PC, cpu.PC, "PC")
+
+					for _, setInfo := range final.RAM {
+						pos := setInfo[0]
+						value := uint8(setInfo[1])
+						assert.EqualValues(t, value, ram.ReadU8(pos))
+						*ram.Ptr(pos) = value
+					}
 				})
 			}
 		})
