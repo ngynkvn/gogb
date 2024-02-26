@@ -270,13 +270,19 @@ func (c *CPU) FetchExecute() {
 		unimplementedOp(c, opcode)
 	case 0x2F:
 		// CPL
-		unimplementedOp(c, opcode)
+		c.A = c.A ^ 0xFF
+		c.SetN(true)
+		c.SetH(true)
 	case 0x37:
 		// SCF
-		unimplementedOp(c, opcode)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(true)
 	case 0x3F:
 		// CCF
-		unimplementedOp(c, opcode)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(!c.F_C())
 	case 0xC6:
 		// ADD A, n8
 		c.AddImm8(false)
