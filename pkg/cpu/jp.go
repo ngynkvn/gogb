@@ -63,7 +63,7 @@ func (c *CPU) Jr(opcode uint8) {
 
 func (c *CPU) JP(opcode uint8) {
 	cond := (opcode >> 3) & 0b11
-	// TODO: refactor
+	// TODO(002): refactor
 	if (opcode&1) == 1 && cond == 0b01 {
 		// JP HL
 		c.PC = c.HL()

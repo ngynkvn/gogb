@@ -54,7 +54,7 @@ func TestSM83(t *testing.T) {
 							t.Fatalf("Failed, panicked")
 						}
 					}()
-					// TODO: Mock ram
+					// TODO(004): Mock ram
 					ram := mem.NewRAM()
 					initial := tc.Initial
 					final := tc.Final

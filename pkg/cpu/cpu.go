@@ -108,7 +108,6 @@ func (c *CPU) FetchExecute() {
 		return
 	}
 	opcode := c.ReadU8Imm()
-	// add todo:['0xF9']
 	switch opcode {
 	case 0x00:
 		// NOP

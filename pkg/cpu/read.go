@@ -85,7 +85,7 @@ func (c *CPU) SetSP(value uint16) {
 	c.Set16(0b11, value)
 }
 
-// TODO: refactor
+// TODO(003): refactor
 func (c *CPU) SetHL(value uint16) {
 	c.Set16(0b10, value)
 }

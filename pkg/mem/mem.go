@@ -1,6 +1,7 @@
 package mem
 
 import (
+	"bytes"
 	"fmt"
 	"gogb/pkg/bits"
 	"log"
@@ -9,6 +10,7 @@ import (
 type RAM struct {
 	bootrom [0x100]byte
 	memory  [0x10000]byte
+	serial  bytes.Buffer
 }
 
 func NewRAM() RAM {
@@ -47,9 +49,11 @@ func (r *RAM) WriteU16(pos uint16, value uint16) {
 }
 
 func (r *RAM) WriteU8(pos uint16, value uint8) {
-	// TODO: Proper hook for cpu tests
-	if pos == 0xFF01 {
+	switch {
+	// TODO(001): Proper hook for serial output
+	case pos == 0xFF01:
 		fmt.Printf("%c", value)
+		r.serial.WriteByte(value)
 	}
 	r.memory[pos] = value
 }
