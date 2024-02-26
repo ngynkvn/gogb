@@ -90,20 +90,13 @@ func NewCPU(mem *mem.RAM) *CPU {
 	return &cpu
 }
 
-func (c *CPU) AF() uint16 {
-	return (uint16(c.A) << 8) | (uint16(c.F))
-}
-
-func (c *CPU) BC() uint16 {
-	return (uint16(c.B) << 8) | (uint16(c.C))
-}
-
-func (c *CPU) DE() uint16 {
-	return (uint16(c.D) << 8) | (uint16(c.E))
-}
-
-func (c *CPU) HL() uint16 {
-	return (uint16(c.H) << 8) | (uint16(c.L))
+func (c *CPU) SkipBootRom() {
+	c.A, c.F = 0x01, 0x00
+	c.B, c.C = 0xFF, 0x13
+	c.D, c.D = 0x00, 0xC1
+	c.H, c.L = 0x84, 0x03
+	c.PC = 0x100
+	c.SP = 0xFFFE
 }
 
 func (c *CPU) SetA(val uint8) {
@@ -111,8 +104,14 @@ func (c *CPU) SetA(val uint8) {
 }
 
 func (c *CPU) FetchExecute() {
-	opcode := c.ReadU8(c.PC)
+	if c.halt {
+		return
+	}
+	opcode := c.ReadU8Imm()
 	switch opcode {
+	case 0x00:
+		// NOP
+		break
 	case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
 		0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
 		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
@@ -122,6 +121,36 @@ func (c *CPU) FetchExecute() {
 		0x70, 0x71, 0x72, 0x73, 0x74, 0x75 /*0x76*/, 0x77,
 		0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F:
 		c.Ld(opcode)
+	case 0x08:
+		addr := c.ReadU16Imm()
+		c.WriteU16(addr, c.SP)
+	case 0x01, 0x11, 0x21, 0x31:
+		// LD r16, n16
+		c.Ld16(opcode)
+	case 0x02, 0x12, 0x22, 0x32:
+		// LD [r16mem], A
+		c.LdMem8(opcode)
+	case 0xE2:
+		// LD [C], A
+		val := c.A
+		pos := 0xFF00 + uint16(c.C)
+		c.WriteU8(pos, val)
+	case 0xF2:
+		// LD A, [C]
+		pos := 0xFF00 + uint16(c.C)
+		c.SetA(c.ReadU8(pos))
+	case 0xF8:
+		// LD HL, SP + e8
+		a, b := c.SP, int8(c.ReadU8Imm())
+		result := uint16(int32(a) + int32(b))
+		c.SetHL(uint16(result))
+
+		c.SetZ(false)
+		c.SetN(false)
+		// idk
+		tmpVal := a ^ uint16(b) ^ result
+		c.SetH(tmpVal&0x10 == 0x10)
+		c.SetC(tmpVal&0x100 == 0x100)
 	case 0x76:
 		c.halt = true
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
@@ -146,12 +175,13 @@ func (c *CPU) FetchExecute() {
 		// OR A, r8
 		c.Or(opcode)
 	case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF:
-		// INC A, r8
+		// CP A, r8
 		c.Cp(opcode)
 	case 0x03, 0x13, 0x23, 0x33:
+		// INC r16
 		c.Inc16(opcode)
 	case 0x0B, 0x1B, 0x2B, 0x3B:
-		// DEC r8
+		// DEC r16
 		c.Dec16(opcode)
 	case 0x0C, 0x1C, 0x2C, 0x3C,
 		0x04, 0x14, 0x24, 0x34:
@@ -159,66 +189,158 @@ func (c *CPU) FetchExecute() {
 		c.Inc8(opcode)
 	case 0x0D, 0x1D, 0x2D, 0x3D,
 		0x05, 0x15, 0x25, 0x35:
-		// INC r8
+		// DEC r8
 		c.Dec8(opcode)
 	case 0x09, 0x19, 0x29, 0x39:
-		// ADD r16
-		c.Add16(opcode)
-		fallthrough
+		// ADD HL, r16
+		c.InstrAdd16(c.SetHL, c.HL(), c.FetchR16((opcode>>4)&0b11), false)
+	case 0x06, 0x16, 0x26, 0x36,
+		0x0E, 0x1E, 0x2E, 0x3E:
+		// LD r8, n8
+		c.InstrLd8(c.SetR8((opcode>>3)&0b111), c.ReadU8Imm())
+	case 0x0A, 0x1A, 0x2A, 0x3A:
+		// LD A, [mem]
+		c.InstrLd8(c.SetA, c.ReadU8(c.FetchR16Mem((opcode>>4)&0b11)))
 	case 0x18, 0x20, 0x28, 0x30, 0x38:
 		// JR
-		fallthrough
-	case 0xC0, 0xC8, 0xC9, 0xD0, 0xD8:
-		// RET
-		fallthrough
-	case 0xC1, 0xD1, 0xE1, 0xF1:
-		// POP
-		fallthrough
+		c.Jr(opcode)
 	case 0xC2, 0xC3, 0xCA, 0xD2, 0xDA, 0xE9:
 		// JP
-		fallthrough
+		c.JP(opcode)
+	case 0xC0, 0xC8, 0xC9, 0xD0, 0xD8:
+		// RET
+		c.RET(opcode)
 	case 0xC4, 0xCC, 0xCD, 0xD4, 0xDC:
 		// CALL
-		fallthrough
+		c.CALL(opcode)
+	case 0xC1, 0xD1, 0xE1, 0xF1:
+		// POP
+		c.POP(opcode)
 	case 0xC5, 0xD5, 0xE5, 0xF5:
 		// PUSH
-		fallthrough
+		c.PUSH(opcode)
 	case 0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF:
 		// RST
-		fallthrough
+		c.RST(opcode)
 	case 0x07:
 		// RLCA
-		fallthrough
+		val := c.A
+		result := (val << 1) | (val >> 7)
+		c.A = result
+
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(val > 0x7F)
 	case 0x0F:
 		// RRCA
-		fallthrough
+		val := c.A
+		result := (val >> 1) | ((val & 1) << 7)
+		c.A = result
+
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(result > 0x7F)
 	case 0x10:
 		// STOP
-		fallthrough
+		c.halt = true
 	case 0x17:
 		// RLA
-		fallthrough
+		val := c.A
+		var carry uint8
+		if c.F_C() {
+			carry = 0b1
+		}
+		result := uint8(val<<1) | carry
+
+		c.A = result
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(val > 0x7F)
 	case 0x1F:
 		// RRA
-		fallthrough
+		val := c.A
+		var carry uint8
+		if c.F_C() {
+			carry = 0b1000_0000
+		}
+		result := uint8(val>>1) | carry
+		c.A = result
+
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC((val & 1) == 1)
 	case 0x27:
 		// DAA
-		fallthrough
+		offset := uint8(0)
+		should_carry := false
+		val := c.A
+		hc := c.F_H()
+		carry := c.F_C()
+		subtract := c.F_N()
+		if (!subtract && (val&0xF) > 0x09) || hc {
+			offset |= 0x06
+		}
+
+		if (!subtract && val > 0x99) || carry {
+			offset |= 0x60
+			should_carry = true
+		}
+		switch subtract {
+		case true:
+			c.A = c.A - offset
+		case false:
+			c.A = c.A + offset
+		}
+		c.SetZ(c.A == 0)
+		// --
+		c.SetH(false)
+		c.SetC(should_carry)
 	case 0x2F:
 		// CPL
-		fallthrough
+		c.A = c.A ^ 0xFF
+		c.SetN(true)
+		c.SetH(true)
 	case 0x37:
 		// SCF
-		fallthrough
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(true)
 	case 0x3F:
 		// CCF
-		fallthrough
+		c.SetN(false)
+		c.SetH(false)
+		c.SetC(!c.F_C())
+	case 0xFA:
+		// LD A, [a16]
+		c.A = c.ReadU8(c.ReadU16Imm())
+	case 0xF9:
+		// LD SP, HL
+		c.SP = c.HL()
+	case 0xEA:
+		// LD [a16], A
+		c.WriteU8(c.ReadU16Imm(), c.A)
+	case 0xE8:
+		// ADD SP, e8
+		a, b := c.SP, int8(c.ReadU8Imm())
+		result := uint16(int32(a) + int32(b))
+		c.SetSP(uint16(result))
+
+		c.SetZ(false)
+		c.SetN(false)
+		// idk
+		tmpVal := a ^ uint16(b) ^ result
+		c.SetH(tmpVal&0x10 == 0x10)
+		c.SetC(tmpVal&0x100 == 0x100)
 	case 0xC6:
 		// ADD A, n8
-		c.InstrAdd(c.SetA, c.A, c.ReadU8(c.PC), false)
+		c.AddImm8(false)
 	case 0xD6:
 		// SUB A, n8
-		c.SubImm8()
+		c.SubImm8(false)
 	case 0xE6:
 		// AND A, n8
 		c.AndImm8()
@@ -239,53 +361,83 @@ func (c *CPU) FetchExecute() {
 		c.CpImm8()
 	case 0xCB:
 		// PREFIX
-		fallthrough
+		c.CB(c.ReadU8Imm())
 	case 0xD9:
 		// RETI
-		fallthrough
-	case 0xE0, 0xF0:
-		// LDH
-		fallthrough
+		pos := c.ReadU16(c.SP)
+		c.SP += 2
+		c.PC = pos
+		c.interrupts = true
+	case 0xE0:
+		// LDH [a8], A
+		a8 := c.ReadU8Imm()
+		pos := 0xFF00 + uint16(a8)
+
+		val := c.A
+		c.WriteU8(pos, val)
+	case 0xF0:
+		// LDH A, [a8]
+		a8 := c.ReadU8Imm()
+		pos := 0xFF00 + uint16(a8)
+
+		val := c.ReadU8(pos)
+		c.SetA(val)
 	case 0xF3:
 		// DI
-		fallthrough
+		c.interrupts = false
 	case 0xFB:
 		// EI
-		fallthrough
+		c.interrupts = true
 	case 0xD3:
 		// ILLEGAL_D3
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xDB:
 		// ILLEGAL_DB
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xDD:
 		// ILLEGAL_DD
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xE3:
 		// ILLEGAL_E3
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xE4:
 		// ILLEGAL_E4
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xEB:
 		// ILLEGAL_EB
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xEC:
 		// ILLEGAL_EC
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xED:
 		// ILLEGAL_ED
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xF4:
 		// ILLEGAL_F4
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xFC:
 		// ILLEGAL_FC
-		fallthrough
+		unimplementedOp(c, opcode)
 	case 0xFD:
 		// ILLEGAL_FD
-		fallthrough
+		unimplementedOp(c, opcode)
 	default:
-		panic(fmt.Sprintln("unimplemented:", INSTR_NAME[opcode]))
+		unimplementedOp(c, opcode)
 	}
+}
+
+func unimplementedOp(c *CPU, opcode uint8) {
+	fmt.Printf("%s\n", c.Dump())
+	fmt.Printf("\n\nunimplemented:%s\t%#x\n", INSTR_NAME[opcode], opcode)
+	panic("unimplemented")
+}
+
+func (c *CPU) Dump() string {
+	return fmt.Sprintf(
+		`AF: %04X
+BC: %#04x
+DE: %#04x
+HL: %#04x
+SP: %#04x
+PC: %#04x`, c.AF(), c.BC(), c.DE(), c.HL(), c.SP, c.PC)
 }
