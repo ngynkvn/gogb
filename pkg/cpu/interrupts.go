@@ -39,7 +39,13 @@ func (c *CPU) Interrupts() (cycles uint) {
 
 }
 
-func (c *CPU) ServiceInterrupt(IntAddr uint8) {
+func (c *CPU) RequestInterrupt(intAddr uint8) {
+	flags := c.ram.ReadU8(ADDR_IF) | 0xE0
+	flags = bits.Set(flags, intAddr)
+	c.ram.WriteU8(ADDR_IF, flags)
+}
+
+func (c *CPU) ServiceInterrupt(intAddr uint8) {
 	if !c.IME && c.halt {
 		c.halt = false
 		return
@@ -47,13 +53,9 @@ func (c *CPU) ServiceInterrupt(IntAddr uint8) {
 	c.IME = false
 	c.halt = false
 	flags := c.ram.ReadU8(ADDR_IF)
-	flags = bits.Reset(flags, IntAddr)
+	flags = bits.Reset(flags, intAddr)
 	c.ram.WriteU8(ADDR_IF, flags)
 
 	c.PushStack(c.PC)
-	c.PC = INT_ADDR_MAP[IntAddr]
-}
-
-func (c *CPU) Timer(cycles uint) {
-
+	c.PC = INT_ADDR_MAP[intAddr]
 }

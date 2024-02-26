@@ -183,8 +183,14 @@ func (c *CPU) ReadU16(pos uint16) uint16 {
 
 // Write u8 to memory, incur +1 cycle
 func (c *CPU) WriteU8(pos uint16, value uint8) {
+	switch pos {
+	case ADDR_DIV:
+		c.DIV = 0x00
+		c.ram.WriteU8(pos, 0x00)
+	default:
+		c.ram.WriteU8(pos, value)
+	}
 	c.CycleM += 1
-	c.ram.WriteU8(pos, value)
 }
 
 // Write u16 to memory, incur +2 cycle

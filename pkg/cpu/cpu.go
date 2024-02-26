@@ -83,6 +83,9 @@ type CPU struct {
 
 	IME       bool
 	EI_QUEUED bool
+
+	TimerCount uint
+	DIV        uint
 }
 
 func NewCPU(mem *mem.RAM) *CPU {
@@ -114,16 +117,18 @@ func (c *CPU) Update() {
 		c.IME = true
 		c.EI_QUEUED = false
 	}
-	prev := c.CycleM
-	c.FetchExecute()
-	opCycles := c.CycleM - prev
+	opCycles := c.FetchExecute()
 	c.Timer(opCycles)
 	c.CycleM += c.Interrupts()
 }
 
-func (c *CPU) FetchExecute() {
+func (c *CPU) FetchExecute() uint {
+	prevCycles := c.CycleM
+	// TODO:
+	// need better way to repr how many cycles would have
+	// passed in halt situations
 	if c.halt {
-		return
+		return 1
 	}
 	opcode := c.ReadU8Imm()
 	switch opcode {
@@ -447,6 +452,7 @@ func (c *CPU) FetchExecute() {
 	default:
 		unimplementedOp(c, opcode)
 	}
+	return c.CycleM - prevCycles
 }
 
 func unimplementedOp(c *CPU, opcode uint8) {

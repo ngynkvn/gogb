@@ -1,7 +1,9 @@
 # TODO
 
-- [ ] Interrupts
+- [x] Interrupts
 - [ ] Timers
+  - [x] Timer implemented
+  - [ ] TODO(005): Obscure behaviors
 - [ ] IO
 - [ ] Graphics
   - [ ] Tiles
@@ -9,8 +11,8 @@
   - [ ] IMGui debugger
 - [ ] Sound
 - [ ] Testing
-  - [ ] Timing
-  - [ ] Pass Interrupts in Blargg
+  - [x] Timing
+  - [x] Pass Interrupts in Blargg
 
 # Refactor
 - [ ] Impl. Interfaces

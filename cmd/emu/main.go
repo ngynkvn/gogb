@@ -39,6 +39,5 @@ func main() {
 
 	for {
 		cpu.Update()
-		// time.Sleep(time.Second / 100)
 	}
 }

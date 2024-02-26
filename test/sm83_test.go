@@ -50,6 +50,7 @@ func TestSM83(t *testing.T) {
 			assert.NoError(t, json.Unmarshal(bytes, &tcs))
 			for _, tc := range tcs {
 				t.Run(tc.Name, func(tt *testing.T) {
+					tt.Parallel()
 					defer func() {
 						if r := recover(); r != nil {
 							t.Fatalf("Failed, panicked")
