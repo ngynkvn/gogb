@@ -10,7 +10,7 @@ import (
 type RAM struct {
 	bootrom [0x100]byte
 	memory  [0x10000]byte
-	serial  bytes.Buffer
+	Serial  bytes.Buffer
 }
 
 func NewRAM() *RAM {
@@ -57,7 +57,7 @@ func (r *RAM) WriteU8(pos uint16, value uint8) {
 	// TODO(001): Proper hook for serial output
 	case pos == 0xFF01:
 		fmt.Printf("%c", value)
-		r.serial.WriteByte(value)
+		r.Serial.WriteByte(value)
 	}
 	r.memory[pos] = value
 }
@@ -76,4 +76,14 @@ func (r *RAM) ReadU16(pos uint16) uint16 {
 	low := r.memory[pos]
 	high := r.memory[pos+1]
 	return uint16(high)<<8 | uint16(low)
+}
+
+func (r *RAM) DMA(data uint8) {
+	addr := int(data) << 8
+	dst := r.memory[0xFE00:0xFEA0]
+	src := r.memory[addr : addr+0xA0]
+	n := copy(dst, src)
+	if n != 160 {
+		panic("dma failed")
+	}
 }

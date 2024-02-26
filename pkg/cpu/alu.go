@@ -1,5 +1,7 @@
 package cpu
 
+import "gogb/pkg/bits"
+
 // TODO: test this
 func (c *CPU) Add(opcode uint8, addCarry bool) {
 	src := opcode & 0b111
@@ -114,7 +116,7 @@ func (c *CPU) Dec16(opcode uint8) {
 }
 
 func (c *CPU) InstrAdd(set func(uint8), a uint8, b uint8, addCarry bool) {
-	carry := int16(B(c.F_C() && addCarry))
+	carry := int16(bits.B(c.F_C() && addCarry))
 	result := int16(a) + int16(b) + carry
 	c.SetZ(uint8(result) == 0)
 	c.SetN(false)
@@ -125,7 +127,7 @@ func (c *CPU) InstrAdd(set func(uint8), a uint8, b uint8, addCarry bool) {
 }
 
 func (c *CPU) InstrSub(set func(uint8), a uint8, b uint8, addCarry bool) {
-	carry := int16(B(c.F_C() && addCarry))
+	carry := int16(bits.B(c.F_C() && addCarry))
 	result := int16(a) - int16(b) - carry
 
 	c.SetZ(uint8(result) == 0)
@@ -178,12 +180,4 @@ func (c *CPU) InstrCp(a uint8, b uint8) {
 	c.SetN(true)
 	c.SetH(int16(a&0xF)-int16(b&0xF) < 0x00)
 	c.SetC(result < 0)
-}
-
-func B(b bool) int {
-	if b {
-		return 1
-	} else {
-		return 0
-	}
 }

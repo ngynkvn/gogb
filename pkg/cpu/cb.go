@@ -1,5 +1,7 @@
 package cpu
 
+import "gogb/pkg/bits"
+
 func (c *CPU) CB(postfix uint8) {
 	switch postfix {
 	case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07:
@@ -90,7 +92,7 @@ func (c *CPU) RL(opcode uint8) {
 	val := c.FetchR8(dst)
 
 	newCarry := val >> 7
-	prevCarry := B(c.F_C())
+	prevCarry := bits.B(c.F_C())
 	result := (val<<1)&0xFF | uint8(prevCarry)
 	c.SetR8(dst)(result)
 
@@ -105,7 +107,7 @@ func (c *CPU) RR(opcode uint8) {
 	val := c.FetchR8(dst)
 
 	newCarry := val & 1
-	prevCarry := B(c.F_C())
+	prevCarry := bits.B(c.F_C())
 
 	result := (val >> 1) | uint8(prevCarry<<7)
 	c.SetR8(dst)(result)

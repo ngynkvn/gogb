@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	c "gogb/pkg/cpu"
+	"gogb/pkg/graphics"
 	"gogb/pkg/mem"
 	"os"
 	"path"
@@ -65,7 +66,7 @@ func TestSM83(t *testing.T) {
 						value := uint8(setInfo[1])
 						*ram.Ptr(pos) = value
 					}
-					cpu := c.NewCPU(ram, nil)
+					cpu := c.NewCPU(ram, graphics.NewDisplay(ram))
 					cpu.A = initial.A
 					cpu.B = initial.B
 					cpu.C = initial.C

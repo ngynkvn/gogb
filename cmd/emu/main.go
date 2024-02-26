@@ -7,6 +7,7 @@ import (
 	"gogb/pkg/mem"
 	"log/slog"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -20,13 +21,13 @@ func main() {
 	}
 	mem := mem.NewRAM()
 	path := os.Args[1]
-	bootrom, err := os.ReadFile("./bootrom.bin")
-	if err != nil {
-		slog.Error("err: %s", err)
-		os.Exit(1)
-	}
-	mem.CopyBootRom(bootrom)
-	slog.Info("bytes read!", "n", len(bootrom))
+	// bootrom, err := os.ReadFile("./bootrom.bin")
+	// if err != nil {
+	// 	slog.Error("err: %s", err)
+	// 	os.Exit(1)
+	// }
+	// mem.CopyBootRom(bootrom)
+	// slog.Info("bytes read!", "n", len(bootrom))
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		slog.Error("err: %s", err)
@@ -39,7 +40,16 @@ func main() {
 	// TODO
 	cpu.SkipBootRom()
 
+	nExtra := 30_000
 	for {
 		cpu.Update()
+		if strings.Contains(mem.Serial.String(), "Passed") {
+			nExtra--
+			if nExtra == 0 {
+				slog.Info("Done @", "pc", cpu.PC)
+				display.DumpPNG("./output.png")
+				break
+			}
+		}
 	}
 }
