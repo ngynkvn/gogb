@@ -62,3 +62,8 @@ func (c *CPU) Jr(opcode uint8) {
 	}
 	c.PC = uint16(pos)
 }
+
+func (c *CPU) RST(opcode uint8) {
+	tgt := uint16((opcode>>3)&0b11) * 8
+	c.PC = tgt
+}

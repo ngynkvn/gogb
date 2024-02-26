@@ -89,11 +89,10 @@ func (c *CPU) Dec8(opcode uint8) {
 }
 
 func (c *CPU) InstrAdd16(set func(uint16), a uint16, b uint16, addCarry bool) {
-	carry := int32(B(addCarry))
-	result := int32(a) + int32(b) + carry
+	result := int32(a) + int32(b)
 
 	c.SetN(false)
-	c.SetH((a&0xFF)+(b&0xFF)+uint16(carry) > 0xFF)
+	c.SetH(((a & 0xFFF) + (b & 0xFFF)) > 0xFFF)
 	c.SetC(result > 0xFFFF)
 
 	set(uint16(result))
@@ -104,10 +103,6 @@ func (c *CPU) Inc16(opcode uint8) {
 	val := c.FetchR16(dst)
 	result := val + 1
 
-	c.SetZ(result == 0)
-	c.SetN(false)
-	c.SetH((val & 0xF) == 0xF)
-
 	c.Set16(dst, result)
 }
 
@@ -115,10 +110,6 @@ func (c *CPU) Dec16(opcode uint8) {
 	dst := (opcode >> 3) & 0b11
 	val := c.FetchR16(dst)
 	result := val - 1
-
-	c.SetZ(result == 0)
-	c.SetN(false)
-	c.SetH((val & 0xF) == 0x0)
 
 	c.Set16(dst, result)
 }

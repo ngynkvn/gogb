@@ -3,7 +3,6 @@ package cpu
 import (
 	"fmt"
 	"gogb/pkg/mem"
-	"log/slog"
 )
 
 // https://gbdev.io/gb-opcodes//optables/
@@ -100,9 +99,6 @@ func (c *CPU) FetchExecute() {
 		return
 	}
 	opcode := c.ReadU8Imm()
-	if c.PC > 0x0b {
-		slog.Info(fmt.Sprintf("%#04x:%#02x %10s", c.PC-1, opcode, INSTR_NAME[opcode]))
-	}
 	// add todo:['0x08', '0xF2', '0xF8', '0xF9']
 	switch opcode {
 	case 0x00:
@@ -187,18 +183,18 @@ func (c *CPU) FetchExecute() {
 	case 0xC0, 0xC8, 0xC9, 0xD0, 0xD8:
 		// RET
 		unimplementedOp(c, opcode)
-	case 0xC1, 0xD1, 0xE1, 0xF1:
-		// POP
-		c.POP(opcode)
 	case 0xC4, 0xCC, 0xCD, 0xD4, 0xDC:
 		// CALL
 		c.CALL(opcode)
+	case 0xC1, 0xD1, 0xE1, 0xF1:
+		// POP
+		c.POP(opcode)
 	case 0xC5, 0xD5, 0xE5, 0xF5:
 		// PUSH
 		c.PUSH(opcode)
 	case 0xC7, 0xCF, 0xD7, 0xDF, 0xE7, 0xEF, 0xF7, 0xFF:
 		// RST
-		unimplementedOp(c, opcode)
+		c.RST(opcode)
 	case 0x07:
 		// RLCA
 		val := c.A
