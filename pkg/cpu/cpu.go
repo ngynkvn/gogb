@@ -135,13 +135,14 @@ func (c *CPU) FetchExecute() {
 		// LD HL, SP + e8
 		a, b := c.SP, int8(c.ReadU8Imm())
 		result := uint16(int32(a) + int32(b))
+		c.SetHL(uint16(result))
+
 		c.SetZ(false)
 		c.SetN(false)
 		// idk
 		tmpVal := a ^ uint16(b) ^ result
 		c.SetH(tmpVal&0x10 == 0x10)
-		c.SetH(tmpVal&0x100 == 0x100)
-		c.SetHL(uint16(result))
+		c.SetC(tmpVal&0x100 == 0x100)
 	case 0x76:
 		c.halt = true
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:

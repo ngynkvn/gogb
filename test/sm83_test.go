@@ -91,7 +91,7 @@ func TestSM83(t *testing.T) {
 					for _, setInfo := range final.RAM {
 						pos := setInfo[0]
 						value := uint8(setInfo[1])
-						assert.EqualValues(t, value, ram.ReadU8(pos))
+						assert.EqualValues(tt, value, ram.ReadU8(pos))
 						*ram.Ptr(pos) = value
 					}
 				})
