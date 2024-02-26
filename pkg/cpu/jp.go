@@ -8,25 +8,35 @@ import (
 // TODO: paranoid mode
 func (c *CPU) CALL(opcode uint8) {
 	condition := (opcode >> 3) & 0b11
-	var pos = c.PC
 	targetAddr := c.ReadU16Imm()
+	var pos = c.PC
 	switch {
 	// Always
 	case (opcode == 0b110_01_101):
 		pos = targetAddr
 		c.cycle++
+		c.SP -= 2
+		c.ram.WriteU16(c.SP, pos)
 	case condition == 0b00 && !c.F_Z():
 		pos = targetAddr
 		c.cycle++
+		c.SP -= 2
+		c.WriteU16(c.SP, pos)
 	case condition == 0b01 && c.F_Z():
 		pos = targetAddr
 		c.cycle++
+		c.SP -= 2
+		c.WriteU16(c.SP, pos)
 	case condition == 0b10 && !c.F_C():
 		pos = targetAddr
 		c.cycle++
+		c.SP -= 2
+		c.WriteU16(c.SP, pos)
 	case condition == 0b11 && c.F_C():
 		pos = targetAddr
 		c.cycle++
+		c.SP -= 2
+		c.WriteU16(c.SP, pos)
 	}
 	c.PC = pos
 }
@@ -64,6 +74,8 @@ func (c *CPU) Jr(opcode uint8) {
 }
 
 func (c *CPU) RST(opcode uint8) {
-	tgt := uint16((opcode>>3)&0b11) * 8
+	tgt := uint16((opcode>>3)&0b111) * 8
+	c.SP -= 2
+	c.ram.WriteU16(c.SP, c.PC)
 	c.PC = tgt
 }

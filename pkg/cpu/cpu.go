@@ -99,7 +99,7 @@ func (c *CPU) FetchExecute() {
 		return
 	}
 	opcode := c.ReadU8Imm()
-	// add todo:['0x08', '0xF2', '0xF8', '0xF9']
+	// add todo:['0xF9']
 	switch opcode {
 	case 0x00:
 		// NOP
@@ -113,6 +113,9 @@ func (c *CPU) FetchExecute() {
 		0x70, 0x71, 0x72, 0x73, 0x74, 0x75 /*0x76*/, 0x77,
 		0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F:
 		c.Ld(opcode)
+	case 0x08:
+		addr := c.ReadU16Imm()
+		c.WriteU16(addr, c.SP)
 	case 0x01, 0x11, 0x21, 0x31:
 		// LD r16, n16
 		c.Ld16(opcode)
@@ -123,7 +126,20 @@ func (c *CPU) FetchExecute() {
 		// LD [C], A
 		val := c.A
 		pos := 0xFF00 + uint16(c.C)
-		*c.ram.Ptr(pos) = val
+		c.WriteU8(pos, val)
+	case 0xF2:
+		// LD A, [C]
+		pos := 0xFF00 + uint16(c.C)
+		c.SetA(c.ReadU8(pos))
+	case 0xF8:
+		// LD HL, SP + e8
+		a, b := int16(c.SP), int16(int8(c.ReadU8Imm()))
+		result := int32(a) + int32(b)
+		c.SetZ(false)
+		c.SetN(false)
+		c.SetH(((a & 0xFFF) + (b & 0xFFF)) > 0xFFF)
+		c.SetC(result > 0xFFFF)
+		c.SetHL(uint16(result))
 	case 0x76:
 		c.halt = true
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
@@ -148,7 +164,7 @@ func (c *CPU) FetchExecute() {
 		// OR A, r8
 		c.Or(opcode)
 	case 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF:
-		// INC A, r8
+		// CP A, r8
 		c.Cp(opcode)
 	case 0x03, 0x13, 0x23, 0x33:
 		// INC r16
@@ -293,12 +309,13 @@ func (c *CPU) FetchExecute() {
 		arg := c.ReadU8Imm()
 		val := c.A
 		pos := 0xFF00 + uint16(arg)
-		*c.ram.Ptr(pos) = val
+		c.WriteU8(pos, val)
 	case 0xF0:
+		// LDH A, [a8]
 		arg := c.A
 		val := c.ReadU8Imm()
 		pos := 0xFF00 + uint16(arg)
-		*c.ram.Ptr(pos) = val
+		c.WriteU8(pos, val)
 	case 0xF3:
 		// DI
 		unimplementedOp(c, opcode)

@@ -122,6 +122,7 @@ func (c *CPU) SLA(opcode uint8) {
 
 	carry := val >> 7
 	result := (val << 1) & 0xFF
+	*c.Location(dst) = result
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -160,6 +161,11 @@ func (c *CPU) SWAP(opcode uint8) {
 
 	result := (val << 4 & 0xF0) | (val >> 4)
 	*c.Location(dst) = result
+
+	c.SetZ(result == 0)
+	c.SetN(false)
+	c.SetH(false)
+	c.SetC(false)
 }
 func (c *CPU) BIT(opcode uint8) {
 	dst := opcode & 0b111

@@ -117,7 +117,7 @@ func (c *CPU) Dec16(opcode uint8) {
 func (c *CPU) InstrAdd(set func(uint8), a uint8, b uint8, addCarry bool) {
 	carry := int16(B(c.F_C() && addCarry))
 	result := int16(a) + int16(b) + carry
-	c.SetZ(result == 0)
+	c.SetZ(uint8(result) == 0)
 	c.SetN(false)
 	c.SetH((a&0xF)+(b&0xF)+uint8(carry) > 0xF)
 	c.SetC(result > 0xFF)
@@ -129,7 +129,7 @@ func (c *CPU) InstrSub(set func(uint8), a uint8, b uint8, addCarry bool) {
 	carry := int16(B(c.F_C() && addCarry))
 	result := int16(a) - int16(b) - carry
 
-	c.SetZ(result == 0)
+	c.SetZ(uint8(result) == 0)
 	c.SetN(true)
 	c.SetH(int16(a&0xF)-int16(b&0xF)-int16(carry) < 0x00)
 	c.SetC(result < 0)
@@ -173,12 +173,12 @@ func (c *CPU) InstrOr(set func(uint8), a uint8, b uint8) {
 
 // TODO: test this
 func (c *CPU) InstrCp(a uint8, b uint8) {
-	result := a - b
+	result := int16(a) - int16(b)
 
 	c.SetZ(result == 0)
 	c.SetN(true)
-	c.SetH((a & 0xF) > (b & 0xF))
-	c.SetC(a > b)
+	c.SetH(int16(a&0xF)-int16(b&0xF) < 0x00)
+	c.SetC(result < 0)
 }
 
 func B(b bool) int {

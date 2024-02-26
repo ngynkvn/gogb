@@ -14,24 +14,33 @@ func main() {
 
 	slog.Info("Hello!")
 	if len(os.Args) < 2 {
-		slog.Info("usage: emu [bin-path]")
+		slog.Info("usage: emu [path]")
 		os.Exit(1)
 	}
+	mem := mem.NewRAM()
 	path := os.Args[1]
+	bootrom, err := os.ReadFile("./bootrom.bin")
+	if err != nil {
+		slog.Error("err: %s", err)
+		os.Exit(1)
+	}
+	mem.CopyBootRom(bootrom)
+	slog.Info("bytes read!", "n", len(bootrom))
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		slog.Error("err: %s", err)
 		os.Exit(1)
 	}
-	slog.Info("bytes read!", "n", len(bytes))
-
-	mem := mem.NewRAM()
 	mem.Copy(bytes, 0)
 
 	cpu := cpu.NewCPU(&mem)
 
 	for {
 		cpu.FetchExecute()
+		if cpu.PC == 0xFF {
+
+			panic(cpu.Dump())
+		}
 		// time.Sleep(time.Second / 100)
 	}
 }

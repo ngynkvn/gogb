@@ -176,6 +176,18 @@ func (c *CPU) ReadU16(pos uint16) uint16 {
 	return c.ram.ReadU16(pos)
 }
 
+// Write u8 to memory, incur +1 cycle
+func (c *CPU) WriteU8(pos uint16, value uint8) {
+	c.cycle += 1
+	c.ram.WriteU8(pos, value)
+}
+
+// Write u16 to memory, incur +2 cycle
+func (c *CPU) WriteU16(pos uint16, value uint16) {
+	c.cycle += 2
+	c.ram.WriteU16(pos, value)
+}
+
 func (c *CPU) ReadU8Imm() uint8 {
 	result := c.ram.ReadU8(c.PC)
 	c.PC += 1
@@ -189,6 +201,6 @@ func (c *CPU) ReadU16Imm() uint16 {
 
 func (c *CPU) MemSet8(pos uint16) func(uint8) {
 	return func(u uint8) {
-		*c.ram.Ptr(pos) = u
+		c.WriteU8(pos, u)
 	}
 }
