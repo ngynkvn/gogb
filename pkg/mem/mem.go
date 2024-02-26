@@ -1,6 +1,7 @@
 package mem
 
 import (
+	"fmt"
 	"gogb/pkg/bytes"
 	"log"
 )
@@ -46,6 +47,10 @@ func (r *RAM) WriteU16(pos uint16, value uint16) {
 }
 
 func (r *RAM) WriteU8(pos uint16, value uint8) {
+	// TODO: Proper hook for cpu tests
+	if pos == 0xFF01 {
+		fmt.Printf("%c", value)
+	}
 	r.memory[pos] = value
 }
 

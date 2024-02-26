@@ -34,13 +34,11 @@ func main() {
 	mem.Copy(bytes, 0)
 
 	cpu := cpu.NewCPU(&mem)
+	// TODO
+	cpu.SkipBootRom()
 
 	for {
 		cpu.FetchExecute()
-		if cpu.PC == 0xFF {
-
-			panic(cpu.Dump())
-		}
 		// time.Sleep(time.Second / 100)
 	}
 }

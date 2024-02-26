@@ -90,6 +90,15 @@ func NewCPU(mem *mem.RAM) *CPU {
 	return &cpu
 }
 
+func (c *CPU) SkipBootRom() {
+	c.A, c.F = 0x01, 0x00
+	c.B, c.C = 0xFF, 0x13
+	c.D, c.D = 0x00, 0xC1
+	c.H, c.L = 0x84, 0x03
+	c.PC = 0x100
+	c.SP = 0xFFFE
+}
+
 func (c *CPU) SetA(val uint8) {
 	c.A = val
 }
