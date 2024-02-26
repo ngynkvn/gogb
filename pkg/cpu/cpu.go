@@ -73,9 +73,9 @@ var INSTR_NAME = [256]string{
 
 type CPU struct {
 	ram    *mem.RAM
-	stop   bool
 	halt   bool
 	CycleM uint
+	// stop   bool
 
 	A, F, B, C, D, E uint8
 	H, L             uint8
@@ -114,12 +114,14 @@ func (c *CPU) Update() {
 		c.IME = true
 		c.EI_QUEUED = false
 	}
-	opCycles := c.FetchExecute()
+	prev := c.CycleM
+	c.FetchExecute()
+	opCycles := c.CycleM - prev
 	c.Timer(opCycles)
 	c.CycleM += c.Interrupts()
 }
 
-func (c *CPU) FetchExecute() (cycle uint) {
+func (c *CPU) FetchExecute() {
 	if c.halt {
 		return
 	}
@@ -445,8 +447,6 @@ func (c *CPU) FetchExecute() (cycle uint) {
 	default:
 		unimplementedOp(c, opcode)
 	}
-	cycle = 1
-	return
 }
 
 func unimplementedOp(c *CPU, opcode uint8) {
