@@ -65,7 +65,7 @@ func TestSM83(t *testing.T) {
 						value := uint8(setInfo[1])
 						*ram.Ptr(pos) = value
 					}
-					cpu := c.NewCPU(&ram)
+					cpu := c.NewCPU(ram, nil)
 					cpu.A = initial.A
 					cpu.B = initial.B
 					cpu.C = initial.C

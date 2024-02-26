@@ -24,7 +24,7 @@ const (
 type Display struct {
 	ram *mem.RAM
 
-	ScanlineCounter uint
+	ScanlineCounter int
 }
 
 func NewDisplay(ram *mem.RAM) *Display {
