@@ -21,12 +21,7 @@ var INT_ADDR_MAP = [5]uint16{
 const ADDR_IF = 0xFF0F
 const ADDR_IE = 0xFFFF
 
-func (c *CPU) Interrupts() (cycles int) {
-	if c.eiQueued {
-		c.IME = true
-		c.eiQueued = false
-		return 0
-	}
+func (c *CPU) Interrupts() (cycles uint) {
 	if !c.IME && !c.halt {
 		return 0
 	}
@@ -57,4 +52,8 @@ func (c *CPU) ServiceInterrupt(IntAddr uint8) {
 
 	c.PushStack(c.PC)
 	c.PC = INT_ADDR_MAP[IntAddr]
+}
+
+func (c *CPU) Timer(cycles uint) {
+
 }

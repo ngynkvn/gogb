@@ -4,7 +4,7 @@ func (c *CPU) Ld(opcode uint8) {
 	src := opcode & 0b111
 	val := c.FetchR8(src)
 	dst := (opcode >> 3) & 0b111
-	*c.Location(dst) = val
+	c.SetR8(dst)(val)
 }
 
 func (c *CPU) Ld16(opcode uint8) {
@@ -41,6 +41,7 @@ func (c *CPU) PUSH(opcode uint8) {
 	src := (opcode >> 4) & 0b11
 	val := c.FetchR16Stk(src)
 	c.PushStack(val)
+	c.CycleM++
 }
 func (c *CPU) POP(opcode uint8) {
 	dst := (opcode >> 4) & 0b11

@@ -72,17 +72,17 @@ var INSTR_NAME = [256]string{
 }
 
 type CPU struct {
-	ram   *mem.RAM
-	stop  bool
-	halt  bool
-	cycle uint
+	ram    *mem.RAM
+	stop   bool
+	halt   bool
+	CycleM uint
 
 	A, F, B, C, D, E uint8
 	H, L             uint8
 	SP, PC           uint16
 
-	IME      bool
-	eiQueued bool
+	IME       bool
+	EI_QUEUED bool
 }
 
 func NewCPU(mem *mem.RAM) *CPU {
@@ -90,6 +90,10 @@ func NewCPU(mem *mem.RAM) *CPU {
 		ram: mem,
 	}
 	return &cpu
+}
+
+func (c *CPU) OpcodeName(opcode uint8) string {
+	return INSTR_NAME[opcode]
 }
 
 func (c *CPU) SkipBootRom() {
@@ -105,7 +109,17 @@ func (c *CPU) SetA(val uint8) {
 	c.A = val
 }
 
-func (c *CPU) FetchExecute() {
+func (c *CPU) Update() {
+	if c.EI_QUEUED {
+		c.IME = true
+		c.EI_QUEUED = false
+	}
+	opCycles := c.FetchExecute()
+	c.Timer(opCycles)
+	c.CycleM += c.Interrupts()
+}
+
+func (c *CPU) FetchExecute() (cycle uint) {
 	if c.halt {
 		return
 	}
@@ -153,8 +167,10 @@ func (c *CPU) FetchExecute() {
 		tmpVal := a ^ uint16(b) ^ result
 		c.SetH(tmpVal&0x10 == 0x10)
 		c.SetC(tmpVal&0x100 == 0x100)
+		c.CycleM++
 	case 0x76:
 		c.halt = true
+		c.CycleM += 2
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
 		// ADD A, r8
 		c.Add(opcode, false)
@@ -247,6 +263,7 @@ func (c *CPU) FetchExecute() {
 	case 0x10:
 		// STOP
 		c.halt = true
+		c.CycleM += 2
 	case 0x17:
 		// RLA
 		val := c.A
@@ -322,6 +339,7 @@ func (c *CPU) FetchExecute() {
 	case 0xF9:
 		// LD SP, HL
 		c.SP = c.HL()
+		c.CycleM++
 	case 0xEA:
 		// LD [a16], A
 		c.WriteU8(c.ReadU16Imm(), c.A)
@@ -337,6 +355,7 @@ func (c *CPU) FetchExecute() {
 		tmpVal := a ^ uint16(b) ^ result
 		c.SetH(tmpVal&0x10 == 0x10)
 		c.SetC(tmpVal&0x100 == 0x100)
+		c.CycleM += 2
 	case 0xC6:
 		// ADD A, n8
 		c.AddImm8(false)
@@ -367,8 +386,9 @@ func (c *CPU) FetchExecute() {
 	case 0xD9:
 		// RETI
 		pos := c.PopStack()
+		c.CycleM++
 		c.PC = pos
-		c.eiQueued = true
+		c.IME = true
 	case 0xE0:
 		// LDH [a8], A
 		a8 := c.ReadU8Imm()
@@ -385,10 +405,10 @@ func (c *CPU) FetchExecute() {
 		c.SetA(val)
 	case 0xF3:
 		// DI
-		c.eiQueued = false
+		c.IME = false
 	case 0xFB:
 		// EI
-		c.eiQueued = true
+		c.EI_QUEUED = true
 	case 0xD3:
 		// ILLEGAL_D3
 		unimplementedOp(c, opcode)
@@ -425,6 +445,8 @@ func (c *CPU) FetchExecute() {
 	default:
 		unimplementedOp(c, opcode)
 	}
+	cycle = 1
+	return
 }
 
 func unimplementedOp(c *CPU, opcode uint8) {

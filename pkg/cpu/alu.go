@@ -72,7 +72,7 @@ func (c *CPU) Inc8(opcode uint8) {
 	c.SetN(false)
 	c.SetH((val & 0xF) == 0xF)
 
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 }
 
 func (c *CPU) Dec8(opcode uint8) {
@@ -84,8 +84,7 @@ func (c *CPU) Dec8(opcode uint8) {
 	c.SetN(true)
 	c.SetH((val & 0xF) == 0x0)
 
-	*c.Location(dst) = result
-
+	c.SetR8(dst)(result)
 }
 
 func (c *CPU) InstrAdd16(set func(uint16), a uint16, b uint16, addCarry bool) {
