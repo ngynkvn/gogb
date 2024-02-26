@@ -7,28 +7,23 @@ func (c *CPU) CALL(opcode uint8) {
 	switch {
 	// Always
 	case (opcode == 0b110_01_101):
-		c.SP -= 2
-		c.ram.WriteU16(c.SP, pos)
+		c.PushStack(pos)
 		pos = targetAddr
 		c.cycle++
 	case condition == 0b00 && !c.F_Z():
-		c.SP -= 2
-		c.WriteU16(c.SP, pos)
+		c.PushStack(pos)
 		pos = targetAddr
 		c.cycle++
 	case condition == 0b01 && c.F_Z():
-		c.SP -= 2
-		c.WriteU16(c.SP, pos)
+		c.PushStack(pos)
 		pos = targetAddr
 		c.cycle++
 	case condition == 0b10 && !c.F_C():
-		c.SP -= 2
-		c.WriteU16(c.SP, pos)
+		c.PushStack(pos)
 		pos = targetAddr
 		c.cycle++
 	case condition == 0b11 && c.F_C():
-		c.SP -= 2
-		c.WriteU16(c.SP, pos)
+		c.PushStack(pos)
 		pos = targetAddr
 		c.cycle++
 	}
@@ -99,24 +94,19 @@ func (c *CPU) RET(opcode uint8) {
 	switch {
 	case opcode&1 == 1:
 		// Always
-		pos = c.ReadU16(c.SP)
-		c.SP += 2
+		pos = c.PopStack()
 		c.cycle += 1
 	case cond == 0 && !c.F_Z():
-		pos = c.ReadU16(c.SP)
-		c.SP += 2
+		pos = c.PopStack()
 		c.cycle += 1
 	case cond == 1 && c.F_Z():
-		pos = c.ReadU16(c.SP)
-		c.SP += 2
+		pos = c.PopStack()
 		c.cycle += 1
 	case cond == 2 && !c.F_C():
-		pos = c.ReadU16(c.SP)
-		c.SP += 2
+		pos = c.PopStack()
 		c.cycle += 1
 	case cond == 3 && c.F_C():
-		pos = c.ReadU16(c.SP)
-		c.SP += 2
+		pos = c.PopStack()
 		c.cycle += 1
 	}
 	c.PC = pos
@@ -127,7 +117,6 @@ func (c *CPU) RETI(opcode uint8) {
 
 func (c *CPU) RST(opcode uint8) {
 	tgt := uint16((opcode>>3)&0b111) * 8
-	c.SP -= 2
-	c.ram.WriteU16(c.SP, c.PC)
+	c.PushStack(c.PC)
 	c.PC = tgt
 }

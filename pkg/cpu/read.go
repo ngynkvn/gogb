@@ -204,3 +204,14 @@ func (c *CPU) MemSet8(pos uint16) func(uint8) {
 		c.WriteU8(pos, u)
 	}
 }
+
+func (c *CPU) PushStack(address uint16) {
+	c.SP -= 2
+	c.ram.WriteU16(c.SP, address)
+}
+
+func (c *CPU) PopStack() uint16 {
+	result := c.ram.ReadU16(c.SP)
+	c.SP += 2
+	return result
+}

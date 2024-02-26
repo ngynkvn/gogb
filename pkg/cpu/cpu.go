@@ -72,15 +72,17 @@ var INSTR_NAME = [256]string{
 }
 
 type CPU struct {
-	ram        *mem.RAM
-	stop       bool
-	halt       bool
-	cycle      uint
-	interrupts bool
+	ram   *mem.RAM
+	stop  bool
+	halt  bool
+	cycle uint
 
 	A, F, B, C, D, E uint8
 	H, L             uint8
 	SP, PC           uint16
+
+	IME      bool
+	eiQueued bool
 }
 
 func NewCPU(mem *mem.RAM) *CPU {
@@ -364,10 +366,9 @@ func (c *CPU) FetchExecute() {
 		c.CB(c.ReadU8Imm())
 	case 0xD9:
 		// RETI
-		pos := c.ReadU16(c.SP)
-		c.SP += 2
+		pos := c.PopStack()
 		c.PC = pos
-		c.interrupts = true
+		c.eiQueued = true
 	case 0xE0:
 		// LDH [a8], A
 		a8 := c.ReadU8Imm()
@@ -384,10 +385,10 @@ func (c *CPU) FetchExecute() {
 		c.SetA(val)
 	case 0xF3:
 		// DI
-		c.interrupts = false
+		c.eiQueued = false
 	case 0xFB:
 		// EI
-		c.interrupts = true
+		c.eiQueued = true
 	case 0xD3:
 		// ILLEGAL_D3
 		unimplementedOp(c, opcode)
