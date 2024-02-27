@@ -91,9 +91,9 @@ func (d *Display) UnsignedAddressMode() bool {
 // Bit 2
 func (d *Display) ObjHeight() uint8 {
 	if bits.Test(d.LCDC(), 2) {
-		return 2
+		return 16
 	} else {
-		return 1
+		return 8
 	}
 }
 
@@ -236,7 +236,8 @@ func (d *Display) RenderTiles(scanline uint8) {
 		colorBit = ^colorBit
 
 		colorNum := (bits.B(bits.Test(d2, colorBit))<<1 | bits.B(bits.Test(d1, colorBit)))
-		color := Color(colorNum)
+		// TODO: palette
+		color := d.GetColor(uint8(colorNum), 0xFF47)
 
 		// Safety check.
 		if ly > 143 || p > 159 {
@@ -248,7 +249,7 @@ func (d *Display) RenderTiles(scanline uint8) {
 }
 
 var RGB_COLORS = [4][4]byte{
-	{0xFF, 0xFF, 0xFF, 0x00}, //WHITE
+	{0xFF, 0xFF, 0xFF, 0xFF}, //WHITE
 	{0xCC, 0xCC, 0xCC, 0xFF}, // LIGHT_GRAY
 	{0x77, 0x77, 0x77, 0xFF}, // LIGHT_GRAY
 	{0x00, 0x00, 0x00, 0xFF}, // BLACK
@@ -258,8 +259,83 @@ func (d *Display) BlitPixel(color Color, x uint8, y uint8) {
 	d.screenData[y][x] = RGB_COLORS[color]
 }
 
-func (d *Display) RenderSprites(scanline int32) {
+func (d *Display) GetColor(colorNum uint8, addr uint16) Color {
+	palette := d.ram.ReadU8(addr)
+	hi, lo := uint8(0), uint8(0)
+	switch colorNum {
+	case 0:
+		hi, lo = 1, 0
+	case 1:
+		hi, lo = 3, 2
+	case 2:
+		hi, lo = 5, 4
+	case 3:
+		hi, lo = 7, 6
+	}
+	colorVal := (bits.B(bits.Test(palette, hi))<<1 | bits.B(bits.Test(palette, lo)))
+	return Color(colorVal)
+}
 
+const MAX_SPRITES = 40
+
+func (d *Display) RenderSprites(scanline int32) {
+	for i := 0; i < MAX_SPRITES; i++ {
+		idx := uint16(i * 4)
+		// TODO: refactor constants
+		yPos := d.ram.ReadU8(0xFE00+idx) - 16
+		xPos := d.ram.ReadU8(0xFE00+idx+1) - 8
+		tileLocation := d.ram.ReadU8(0xFE00 + idx + 2)
+		attributes := d.ram.ReadU8(0xFE00 + idx + 3)
+
+		yFlip := bits.Test(attributes, 6)
+		xFlip := bits.Test(attributes, 5)
+
+		scanline := d.ram.ReadU8(ADDR_LY)
+		spriteHeight := d.ObjHeight()
+		if scanline >= yPos && scanline < (yPos+spriteHeight) {
+			// TODO: do these ops in u8
+			line := int(scanline) - int(yPos)
+			if yFlip {
+				line -= int(spriteHeight)
+				line *= -1
+			}
+			line *= 2
+			dataAddr := (0x8000 + uint16(tileLocation)*16) + uint16(line)
+			d1 := d.ram.ReadU8(dataAddr)
+			d2 := d.ram.ReadU8(dataAddr + 1)
+			for p := 7; p >= 0; p-- {
+				// TODO: do these ops in u8
+				colorBit := p
+				if xFlip {
+					colorBit -= 7
+					colorBit *= -1
+				}
+				colorNum := bits.B(bits.Test(d2, uint8(colorBit))) << 1
+				colorNum |= bits.B(bits.Test(d1, uint8(colorBit)))
+
+				// TODO: const
+				colorAddr := uint16(0xFF48)
+				if bits.Test(attributes, 4) {
+					colorAddr = 0xFF49
+				}
+
+				color := d.GetColor(uint8(colorNum), colorAddr)
+
+				// Transparent for sprites
+				if color == WHITE {
+					continue
+				}
+				xPix := 0 - p
+				xPix += 7
+				pixel := xPos + uint8(xPix)
+				if scanline > 143 || p > 159 {
+					slog.Error("OOB write attempted", "ly", scanline, "p", p)
+					continue
+				}
+				d.BlitPixel(color, pixel, scanline)
+			}
+		}
+	}
 }
 
 // TODO
