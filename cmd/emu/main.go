@@ -38,7 +38,6 @@ func main() {
 	cpu.SkipBootRom()
 
 	for {
-		cpu.FetchExecute()
-		// time.Sleep(time.Second / 100)
+		cpu.Update()
 	}
 }

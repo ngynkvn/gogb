@@ -64,7 +64,7 @@ func (c *CPU) RLC(opcode uint8) {
 
 	carry := val >> 7
 	result := (val<<1)&0xFF | carry
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -77,7 +77,7 @@ func (c *CPU) RRC(opcode uint8) {
 
 	carry := val & 1
 	result := (val >> 1) | (carry << 7)
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -92,7 +92,7 @@ func (c *CPU) RL(opcode uint8) {
 	newCarry := val >> 7
 	prevCarry := B(c.F_C())
 	result := (val<<1)&0xFF | uint8(prevCarry)
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -108,7 +108,7 @@ func (c *CPU) RR(opcode uint8) {
 	prevCarry := B(c.F_C())
 
 	result := (val >> 1) | uint8(prevCarry<<7)
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -122,7 +122,7 @@ func (c *CPU) SLA(opcode uint8) {
 
 	carry := val >> 7
 	result := (val << 1) & 0xFF
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -134,7 +134,7 @@ func (c *CPU) SRA(opcode uint8) {
 	val := c.FetchR8(dst)
 
 	result := (val & 0b1000_0000) | (val >> 1)
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -147,7 +147,7 @@ func (c *CPU) SRL(opcode uint8) {
 
 	carry := val & 1
 	result := val >> 1
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -160,7 +160,7 @@ func (c *CPU) SWAP(opcode uint8) {
 	val := c.FetchR8(dst)
 
 	result := (val << 4 & 0xF0) | (val >> 4)
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 
 	c.SetZ(result == 0)
 	c.SetN(false)
@@ -182,7 +182,7 @@ func (c *CPU) RES(opcode uint8) {
 	val := c.FetchR8(dst)
 
 	result := val & ^(1 << b3)
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 }
 func (c *CPU) SET(opcode uint8) {
 
@@ -191,5 +191,5 @@ func (c *CPU) SET(opcode uint8) {
 	val := c.FetchR8(dst)
 
 	result := val | (1 << b3)
-	*c.Location(dst) = result
+	c.SetR8(dst)(result)
 }

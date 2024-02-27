@@ -27,6 +27,10 @@ func (c *CPU) Location(reg uint8) *uint8 {
 
 func (c *CPU) SetR8(reg uint8) func(uint8) {
 	return func(u uint8) {
+		// TODO: refactor
+		if reg == 6 {
+			c.CycleM++
+		}
 		*c.Location(reg) = u
 	}
 }
@@ -91,6 +95,7 @@ func (c *CPU) SetHL(value uint16) {
 }
 
 func (c *CPU) FetchR16(reg uint8) uint16 {
+	c.CycleM += 1
 	switch reg {
 	case 0:
 		return c.BC()
@@ -166,35 +171,43 @@ func (c *CPU) FetchR8(reg uint8) uint8 {
 
 // Read u8 from memory, incur +1 cycle
 func (c *CPU) ReadU8(pos uint16) uint8 {
-	c.cycle += 1
+	c.CycleM += 1
 	return c.ram.ReadU8(pos)
 }
 
 // Read u16 from memory, incur +2 cycle
 func (c *CPU) ReadU16(pos uint16) uint16 {
-	c.cycle += 2
+	c.CycleM += 2
 	return c.ram.ReadU16(pos)
 }
 
 // Write u8 to memory, incur +1 cycle
 func (c *CPU) WriteU8(pos uint16, value uint8) {
-	c.cycle += 1
-	c.ram.WriteU8(pos, value)
+	switch pos {
+	case ADDR_DIV:
+		c.DIV = 0x00
+		c.ram.WriteU8(pos, 0x00)
+	default:
+		c.ram.WriteU8(pos, value)
+	}
+	c.CycleM += 1
 }
 
 // Write u16 to memory, incur +2 cycle
 func (c *CPU) WriteU16(pos uint16, value uint16) {
-	c.cycle += 2
+	c.CycleM += 2
 	c.ram.WriteU16(pos, value)
 }
 
 func (c *CPU) ReadU8Imm() uint8 {
 	result := c.ram.ReadU8(c.PC)
+	c.CycleM += 1
 	c.PC += 1
 	return result
 }
 func (c *CPU) ReadU16Imm() uint16 {
 	result := c.ram.ReadU16(c.PC)
+	c.CycleM += 2
 	c.PC += 2
 	return result
 }
@@ -203,4 +216,15 @@ func (c *CPU) MemSet8(pos uint16) func(uint8) {
 	return func(u uint8) {
 		c.WriteU8(pos, u)
 	}
+}
+
+func (c *CPU) PushStack(address uint16) {
+	c.SP -= 2
+	c.WriteU16(c.SP, address)
+}
+
+func (c *CPU) PopStack() uint16 {
+	result := c.ReadU16(c.SP)
+	c.SP += 2
+	return result
 }

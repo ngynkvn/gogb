@@ -6,6 +6,7 @@ import (
 	"gogb/pkg/mem"
 	"os"
 	"path"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,6 @@ type State struct {
 	H  uint8
 	L  uint8
 
-	//TODO
 	IME uint8
 	EI  uint8
 	RAM [][]uint16 `json:"ram"`
@@ -33,6 +33,7 @@ type TestCase struct {
 	Name    string
 	Initial State
 	Final   State
+	Cycles  []any
 }
 
 func TestSM83(t *testing.T) {
@@ -49,6 +50,7 @@ func TestSM83(t *testing.T) {
 			assert.NoError(t, json.Unmarshal(bytes, &tcs))
 			for _, tc := range tcs {
 				t.Run(tc.Name, func(tt *testing.T) {
+					tt.Parallel()
 					defer func() {
 						if r := recover(); r != nil {
 							t.Fatalf("Failed, panicked")
@@ -74,8 +76,12 @@ func TestSM83(t *testing.T) {
 					cpu.L = initial.L
 					cpu.PC = initial.PC
 					cpu.SP = initial.SP
+					cpu.IME = initial.IME != 0
+					cpu.EI_QUEUED = initial.EI != 0
 
-					cpu.FetchExecute()
+					before := cpu.CycleM
+					cpu.Update()
+					after := cpu.CycleM
 
 					assert.Equal(tt, final.A, cpu.A, "A")
 					assert.Equal(tt, final.B, cpu.B, "B")
@@ -87,6 +93,10 @@ func TestSM83(t *testing.T) {
 					assert.Equal(tt, final.L, cpu.L, "L")
 					assert.Equal(tt, final.SP, cpu.SP, "SP")
 					assert.Equal(tt, final.PC, cpu.PC, "PC")
+					assert.Equal(tt, final.IME != 0, cpu.IME, "IME")
+					opcode, err := strconv.ParseUint(tc.Name[:2], 16, 8)
+					assert.NoError(tt, err)
+					assert.EqualValues(tt, len(tc.Cycles), after-before, "Cycle Count: "+cpu.OpcodeName(uint8(opcode)))
 
 					for _, setInfo := range final.RAM {
 						pos := setInfo[0]
