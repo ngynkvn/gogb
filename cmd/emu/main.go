@@ -5,9 +5,9 @@ import (
 	"gogb/pkg/graphics"
 	"gogb/pkg/log"
 	"gogb/pkg/mem"
+	"gogb/pkg/render"
 	"log/slog"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -40,16 +40,6 @@ func main() {
 	// TODO
 	cpu.SkipBootRom()
 
-	nExtra := 30_000
-	for {
-		cpu.Update()
-		if strings.Contains(mem.Serial.String(), "Passed") {
-			nExtra--
-			if nExtra == 0 {
-				slog.Info("Done @", "pc", cpu.PC)
-				display.DumpPNG("./output.png")
-				break
-			}
-		}
-	}
+	renderer := render.NewEbiten(cpu, display, mem)
+	renderer.Start()
 }

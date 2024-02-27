@@ -29,11 +29,11 @@ const (
 )
 
 const (
-	SCREEN_H = 160
-	SCREEN_W = 144
+	SCREEN_W = 160
+	SCREEN_H = 144
 )
 
-type Surface [SCREEN_H][SCREEN_W][3]byte
+type Surface [SCREEN_H][SCREEN_W][4]byte
 
 type Display struct {
 	ram             *mem.RAM
@@ -246,15 +246,15 @@ func (d *Display) RenderTiles(scanline uint8) {
 	}
 }
 
-var RGB_COLORS = [4][3]byte{
-	{0xFF, 0xFF, 0xFF}, //WHITE
-	{0xCC, 0xCC, 0xCC}, // LIGHT_GRAY
-	{0x77, 0x77, 0x77}, // LIGHT_GRAY
-	{0x00, 0x00, 0x00}, // BLACK
+var RGB_COLORS = [4][4]byte{
+	{0xFF, 0xFF, 0xFF, 0x00}, //WHITE
+	{0xCC, 0xCC, 0xCC, 0xFF}, // LIGHT_GRAY
+	{0x77, 0x77, 0x77, 0xFF}, // LIGHT_GRAY
+	{0x00, 0x00, 0x00, 0xFF}, // BLACK
 }
 
 func (d *Display) BlitPixel(color Color, x uint8, y uint8) {
-	d.screenData[x][y] = RGB_COLORS[color]
+	d.screenData[y][x] = RGB_COLORS[color]
 }
 
 func (d *Display) RenderSprites(scanline int32) {

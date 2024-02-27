@@ -2,7 +2,6 @@ package mem
 
 import (
 	"bytes"
-	"fmt"
 	"gogb/pkg/bits"
 	"log"
 )
@@ -56,8 +55,8 @@ func (r *RAM) WriteU8(pos uint16, value uint8) {
 	switch {
 	// TODO(001): Proper hook for serial output
 	case pos == 0xFF01:
-		fmt.Printf("%c", value)
-		r.Serial.WriteByte(value)
+		// fmt.Printf("%c", value)
+		// r.Serial.WriteByte(value)
 	}
 	r.memory[pos] = value
 }
