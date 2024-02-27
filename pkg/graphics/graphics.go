@@ -33,18 +33,22 @@ const (
 	SCREEN_H = 144
 )
 
-type Surface [SCREEN_H][SCREEN_W][4]byte
+type Surface [SCREEN_H][SCREEN_W]color.RGBA
 
 type Display struct {
 	ram             *mem.RAM
-	Frame           Surface
-	screenData      Surface
+	Frame           image.Image
+	screenData      *image.RGBA
 	ScanlineCounter int
 }
 
 func NewDisplay(ram *mem.RAM) *Display {
+	screenData := image.NewRGBA(image.Rect(0, 0, SCREEN_W, SCREEN_H))
 	return &Display{
-		ram:             ram,
+		ram: ram,
+		// TODO: proper interface
+		Frame:           screenData,
+		screenData:      screenData,
 		ScanlineCounter: 456,
 	}
 }
@@ -248,7 +252,7 @@ func (d *Display) RenderTiles(scanline uint8) {
 	}
 }
 
-var RGB_COLORS = [4][4]byte{
+var RGB_COLORS = [4]color.RGBA{
 	{0xFF, 0xFF, 0xFF, 0xFF}, //WHITE
 	{0xCC, 0xCC, 0xCC, 0xFF}, // LIGHT_GRAY
 	{0x77, 0x77, 0x77, 0xFF}, // LIGHT_GRAY
@@ -256,7 +260,7 @@ var RGB_COLORS = [4][4]byte{
 }
 
 func (d *Display) BlitPixel(color Color, x uint8, y uint8) {
-	d.screenData[y][x] = RGB_COLORS[color]
+	d.screenData.Set(int(x), int(y), RGB_COLORS[color])
 }
 
 func (d *Display) GetColor(colorNum uint8, addr uint16) Color {
@@ -350,17 +354,7 @@ func (d *Display) DumpPNG(path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	img := image.NewRGBA(image.Rect(0, 0, 160, 144))
-	for x, col := range d.Frame {
-		for y, row := range col {
-			img.Set(x, y, color.RGBA{
-				R: row[0],
-				G: row[1],
-				B: row[2],
-				A: 0xFF,
-			})
-		}
-	}
+	img := d.Frame
 	err = png.Encode(fp, img)
 	if err != nil {
 		log.Fatal(err)
