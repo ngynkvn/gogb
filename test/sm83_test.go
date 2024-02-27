@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	c "gogb/pkg/cpu"
+	"gogb/pkg/graphics"
 	"gogb/pkg/mem"
 	"os"
 	"path"
@@ -36,6 +37,9 @@ type TestCase struct {
 	Cycles  []any
 }
 
+// Note: These tests are currently failing due to implementing the graphics unit.
+// Removing the STAT updates should make them pass again
+// TODO(008): Find solution to keep graphics part of testing
 func TestSM83(t *testing.T) {
 	filepath := "../bin/tests_sm83/v1"
 	dirInfo, err := os.ReadDir(filepath)
@@ -65,7 +69,7 @@ func TestSM83(t *testing.T) {
 						value := uint8(setInfo[1])
 						*ram.Ptr(pos) = value
 					}
-					cpu := c.NewCPU(&ram)
+					cpu := c.NewCPU(ram, graphics.NewDisplay(ram))
 					cpu.A = initial.A
 					cpu.B = initial.B
 					cpu.C = initial.C

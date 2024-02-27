@@ -2,7 +2,6 @@ package mem
 
 import (
 	"bytes"
-	"fmt"
 	"gogb/pkg/bits"
 	"log"
 )
@@ -10,11 +9,11 @@ import (
 type RAM struct {
 	bootrom [0x100]byte
 	memory  [0x10000]byte
-	serial  bytes.Buffer
+	Serial  bytes.Buffer
 }
 
-func NewRAM() RAM {
-	return RAM{
+func NewRAM() *RAM {
+	return &RAM{
 		bootrom: [0x100]byte{},
 		memory:  [0x10000]byte{},
 	}
@@ -35,6 +34,10 @@ func (r *RAM) Copy(bytes []byte, pos int) int {
 	return copy(r.memory[pos:], bytes)
 }
 
+func (r *RAM) Slice(from int, to int) []byte {
+	return r.memory[from : to+1]
+}
+
 func (r *RAM) ReadU8(pos uint16) uint8 {
 	// if r.InBootRom() && pos < 0x100 {
 	// 	return r.bootrom[pos]
@@ -52,8 +55,8 @@ func (r *RAM) WriteU8(pos uint16, value uint8) {
 	switch {
 	// TODO(001): Proper hook for serial output
 	case pos == 0xFF01:
-		fmt.Printf("%c", value)
-		r.serial.WriteByte(value)
+		// fmt.Printf("%c", value)
+		// r.Serial.WriteByte(value)
 	}
 	r.memory[pos] = value
 }
@@ -72,4 +75,14 @@ func (r *RAM) ReadU16(pos uint16) uint16 {
 	low := r.memory[pos]
 	high := r.memory[pos+1]
 	return uint16(high)<<8 | uint16(low)
+}
+
+func (r *RAM) DMA(data uint8) {
+	addr := int(data) << 8
+	dst := r.memory[0xFE00:0xFEA0]
+	src := r.memory[addr : addr+0xA0]
+	n := copy(dst, src)
+	if n != 160 {
+		panic("dma failed")
+	}
 }

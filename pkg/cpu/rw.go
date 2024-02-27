@@ -1,6 +1,9 @@
 package cpu
 
-import "gogb/pkg/bits"
+import (
+	"gogb/pkg/bits"
+	"gogb/pkg/graphics"
+)
 
 func (c *CPU) Location(reg uint8) *uint8 {
 	switch reg {
@@ -187,6 +190,10 @@ func (c *CPU) WriteU8(pos uint16, value uint8) {
 	case ADDR_DIV:
 		c.DIV = 0x00
 		c.ram.WriteU8(pos, 0x00)
+	case graphics.ADDR_LY:
+		c.ram.WriteU8(pos, 0x00)
+	case graphics.ADDR_DMA:
+		c.ram.DMA(value)
 	default:
 		c.ram.WriteU8(pos, value)
 	}

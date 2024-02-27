@@ -7,7 +7,7 @@ import (
 )
 
 func TestCpuLd(t *testing.T) {
-	cpu := NewCPU(nil)
+	cpu := NewCPU(nil, nil)
 	cpu.A = 100
 	// Load B, A
 	cpu.Ld(0b01_000_111)

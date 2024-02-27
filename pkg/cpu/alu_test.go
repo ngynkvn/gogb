@@ -9,7 +9,7 @@ import (
 
 func TestCp(t *testing.T) {
 	mem := mem.NewRAM()
-	cpu := NewCPU(&mem)
+	cpu := NewCPU(mem, nil)
 
 	cpu.A = 0x42
 
@@ -25,7 +25,7 @@ func TestAdc(t *testing.T) {
 	b := uint8(165)
 
 	mem := mem.NewRAM()
-	cpu := NewCPU(&mem)
+	cpu := NewCPU(mem, nil)
 
 	cpu.InstrAdd(cpu.SetA, a, b, true)
 
