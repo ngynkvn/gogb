@@ -290,7 +290,7 @@ func (d *Display) RenderSprites(scanline int32) {
 
 				// Transparent for sprites
 				if colorValue == RGB_COLORS[WHITE] {
-					colorValue = color.RGBA{0, 0, 0, 0}
+					continue
 				}
 				xPix := 0 - p
 				xPix += 7
