@@ -5,9 +5,14 @@
   - [x] Timer implemented
   - [ ] TODO(005): Obscure behaviors
 - [ ] IO
+  - [ ] Joypad input
 - [ ] Graphics
-  - [ ] Tiles
-  - [ ] Window Context
+  - [x] Tiles
+  - [ ] Sprites
+  - [x] Window Context
+  - [ ] Renderers
+    - [ ] OpenGL
+    - [ ] Wasm
   - [ ] IMGui debugger
 - [ ] Sound
 - [ ] Testing
