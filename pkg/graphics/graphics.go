@@ -178,15 +178,6 @@ const TileSize = 16
 // 10: Dark Grey
 // 11: Black
 
-type Color uint8
-
-const (
-	WHITE      = Color(0)
-	LIGHT_GRAY = Color(1)
-	DARK_GRAY  = Color(2)
-	BLACK      = Color(3)
-)
-
 func (d *Display) RenderTiles(scanline uint8) {
 	scrollY := d.ram.ReadU8(ADDR_SCROLLY)
 	scrollX := d.ram.ReadU8(ADDR_SCROLLX)
@@ -248,36 +239,8 @@ func (d *Display) RenderTiles(scanline uint8) {
 			slog.Error("OOB write attempted", "ly", ly, "p", p)
 			continue
 		}
-		d.BlitPixel(color, p, ly)
+		d.BlitPixel(RGB_COLORS[color], p, ly)
 	}
-}
-
-var RGB_COLORS = [4]color.RGBA{
-	{0xFF, 0xFF, 0xFF, 0xFF}, //WHITE
-	{0xCC, 0xCC, 0xCC, 0xFF}, // LIGHT_GRAY
-	{0x77, 0x77, 0x77, 0xFF}, // LIGHT_GRAY
-	{0x00, 0x00, 0x00, 0xFF}, // BLACK
-}
-
-func (d *Display) BlitPixel(color Color, x uint8, y uint8) {
-	d.screenData.Set(int(x), int(y), RGB_COLORS[color])
-}
-
-func (d *Display) GetColor(colorNum uint8, addr uint16) Color {
-	palette := d.ram.ReadU8(addr)
-	hi, lo := uint8(0), uint8(0)
-	switch colorNum {
-	case 0:
-		hi, lo = 1, 0
-	case 1:
-		hi, lo = 3, 2
-	case 2:
-		hi, lo = 5, 4
-	case 3:
-		hi, lo = 7, 6
-	}
-	colorVal := (bits.B(bits.Test(palette, hi))<<1 | bits.B(bits.Test(palette, lo)))
-	return Color(colorVal)
 }
 
 const MAX_SPRITES = 40
@@ -323,11 +286,11 @@ func (d *Display) RenderSprites(scanline int32) {
 					colorAddr = 0xFF49
 				}
 
-				color := d.GetColor(uint8(colorNum), colorAddr)
+				colorValue := RGB_COLORS[d.GetColor(uint8(colorNum), colorAddr)]
 
 				// Transparent for sprites
-				if color == WHITE {
-					continue
+				if colorValue == RGB_COLORS[WHITE] {
+					colorValue = color.RGBA{0, 0, 0, 0}
 				}
 				xPix := 0 - p
 				xPix += 7
@@ -336,10 +299,47 @@ func (d *Display) RenderSprites(scanline int32) {
 					slog.Error("OOB write attempted", "ly", scanline, "p", p)
 					continue
 				}
-				d.BlitPixel(color, pixel, scanline)
+				d.BlitPixel(colorValue, pixel, scanline)
 			}
 		}
 	}
+}
+
+type Color uint8
+
+const (
+	WHITE      = Color(0)
+	LIGHT_GRAY = Color(1)
+	DARK_GRAY  = Color(2)
+	BLACK      = Color(3)
+)
+
+var RGB_COLORS = [4]color.RGBA{
+	{0xFF, 0xFF, 0xFF, 0xFF}, //WHITE
+	{0xCC, 0xCC, 0xCC, 0xFF}, // LIGHT_GRAY
+	{0x77, 0x77, 0x77, 0xFF}, // DARK_GRAY
+	{0x00, 0x00, 0x00, 0xFF}, // BLACK
+}
+
+func (d *Display) BlitPixel(color color.RGBA, x uint8, y uint8) {
+	d.screenData.Set(int(x), int(y), color)
+}
+
+func (d *Display) GetColor(colorNum uint8, addr uint16) Color {
+	palette := d.ram.ReadU8(addr)
+	hi, lo := uint8(0), uint8(0)
+	switch colorNum {
+	case 0:
+		hi, lo = 1, 0
+	case 1:
+		hi, lo = 3, 2
+	case 2:
+		hi, lo = 5, 4
+	case 3:
+		hi, lo = 7, 6
+	}
+	colorVal := (bits.B(bits.Test(palette, hi))<<1 | bits.B(bits.Test(palette, lo)))
+	return Color(colorVal)
 }
 
 // TODO
