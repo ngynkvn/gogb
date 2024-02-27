@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"gogb/pkg/cpu"
 	"gogb/pkg/graphics"
 	"gogb/pkg/mem"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Ebiten struct {
@@ -19,9 +21,6 @@ type Ebiten struct {
 }
 
 func (e *Ebiten) Draw(screen *ebiten.Image) {
-	if time.Since(e.lastDraw) < time.Millisecond*17 {
-		return
-	}
 	for yi, ys := range e.display.Frame {
 		for xi, xs := range ys {
 			location := yi*4*graphics.SCREEN_W + xi*4
@@ -29,7 +28,7 @@ func (e *Ebiten) Draw(screen *ebiten.Image) {
 		}
 	}
 	screen.WritePixels(e.buffer)
-	e.lastDraw = time.Now()
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS:%f\nTPS:%f", ebiten.ActualFPS(), ebiten.ActualTPS()))
 }
 
 func (e *Ebiten) Update() error {
@@ -51,11 +50,10 @@ func NewEbiten(cpu *cpu.CPU, display *graphics.Display, ram *mem.RAM) *Ebiten {
 	}
 }
 
-const TICK_RATE = 1048576
+const TICK_RATE = 1048576 * 4
 
 func (e *Ebiten) Start() {
 	ebiten.SetTPS(TICK_RATE)
-	ebiten.SetScreenClearedEveryFrame(false)
 	if err := ebiten.RunGame(e); err != nil {
 		log.Fatal(err)
 	}
