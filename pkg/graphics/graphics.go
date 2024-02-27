@@ -44,7 +44,8 @@ type Display struct {
 
 func NewDisplay(ram *mem.RAM) *Display {
 	return &Display{
-		ram: ram,
+		ram:             ram,
+		ScanlineCounter: 456,
 	}
 }
 
