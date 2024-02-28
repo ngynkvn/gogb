@@ -230,16 +230,16 @@ func (d *Display) RenderTiles(scanline uint8) {
 		colorBit -= 8
 		colorBit = ^colorBit
 
-		colorNum := (bits.B(bits.Test(d2, colorBit))<<1 | bits.B(bits.Test(d1, colorBit)))
+		colorIndex := (bits.B(bits.Test(d2, colorBit))<<1 | bits.B(bits.Test(d1, colorBit)))
 		// TODO: palette
-		color := d.GetColor(uint8(colorNum), 0xFF47)
+		color := RGB_COLORS[d.GetColor(ColorIndex(colorIndex), 0xFF47)]
 
 		// Safety check.
 		if ly > 143 || p > 159 {
 			slog.Error("OOB write attempted", "ly", ly, "p", p)
 			continue
 		}
-		d.BlitPixel(RGB_COLORS[color], p, ly)
+		d.BlitPixel(color, p, ly)
 	}
 }
 
@@ -277,8 +277,8 @@ func (d *Display) RenderSprites(scanline int32) {
 					colorBit -= 7
 					colorBit *= -1
 				}
-				colorNum := bits.B(bits.Test(d2, uint8(colorBit))) << 1
-				colorNum |= bits.B(bits.Test(d1, uint8(colorBit)))
+				colorIndex := bits.B(bits.Test(d2, uint8(colorBit))) << 1
+				colorIndex |= bits.B(bits.Test(d1, uint8(colorBit)))
 
 				// TODO: const
 				colorAddr := uint16(0xFF48)
@@ -286,10 +286,10 @@ func (d *Display) RenderSprites(scanline int32) {
 					colorAddr = 0xFF49
 				}
 
-				colorValue := RGB_COLORS[d.GetColor(uint8(colorNum), colorAddr)]
+				color := RGB_COLORS[d.GetColor(ColorIndex(colorIndex), colorAddr)]
 
 				// Transparent for sprites
-				if colorValue == RGB_COLORS[WHITE] {
+				if colorIndex == 0 {
 					continue
 				}
 				xPix := 0 - p
@@ -299,19 +299,19 @@ func (d *Display) RenderSprites(scanline int32) {
 					slog.Error("OOB write attempted", "ly", scanline, "p", p)
 					continue
 				}
-				d.BlitPixel(colorValue, pixel, scanline)
+				d.BlitPixel(color, pixel, scanline)
 			}
 		}
 	}
 }
 
-type Color uint8
+type ColorIndex uint8
 
 const (
-	WHITE      = Color(0)
-	LIGHT_GRAY = Color(1)
-	DARK_GRAY  = Color(2)
-	BLACK      = Color(3)
+	WHITE      = ColorIndex(0)
+	LIGHT_GRAY = ColorIndex(1)
+	DARK_GRAY  = ColorIndex(2)
+	BLACK      = ColorIndex(3)
 )
 
 var RGB_COLORS = [4]color.RGBA{
@@ -325,21 +325,21 @@ func (d *Display) BlitPixel(color color.RGBA, x uint8, y uint8) {
 	d.screenData.Set(int(x), int(y), color)
 }
 
-func (d *Display) GetColor(colorNum uint8, addr uint16) Color {
+func (d *Display) GetColor(index ColorIndex, addr uint16) ColorIndex {
 	palette := d.ram.ReadU8(addr)
 	hi, lo := uint8(0), uint8(0)
-	switch colorNum {
-	case 0:
+	switch index {
+	case WHITE:
 		hi, lo = 1, 0
-	case 1:
+	case LIGHT_GRAY:
 		hi, lo = 3, 2
-	case 2:
+	case DARK_GRAY:
 		hi, lo = 5, 4
-	case 3:
+	case BLACK:
 		hi, lo = 7, 6
 	}
-	colorVal := (bits.B(bits.Test(palette, hi))<<1 | bits.B(bits.Test(palette, lo)))
-	return Color(colorVal)
+	colorIndex := (bits.B(bits.Test(palette, hi))<<1 | bits.B(bits.Test(palette, lo)))
+	return ColorIndex(colorIndex)
 }
 
 // TODO
