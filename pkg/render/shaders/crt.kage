@@ -1,0 +1,8 @@
+package main
+
+//kage:unit pixels
+
+// Uniform variables
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	return color
+}
