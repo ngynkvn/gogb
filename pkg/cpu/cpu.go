@@ -86,8 +86,9 @@ type CPU struct {
 	IME       bool
 	EI_QUEUED bool
 
-	TimerCount uint
-	DIV        uint
+	TimerCount  uint
+	DIV         uint
+	JoypadState uint8
 }
 
 func NewCPU(mem *mem.RAM, display *graphics.Display) *CPU {
@@ -127,7 +128,8 @@ func (c *CPU) SkipBootRom() {
 	c.PC = 0x100
 	c.SP = 0xFFFE
 	for addr, val := range DMG0_START {
-		c.ram.WriteU8(addr, val)
+		// Can't use WriteU8 here as it has memory management logic
+		*c.ram.Ptr(addr) = val
 	}
 }
 

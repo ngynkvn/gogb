@@ -52,12 +52,6 @@ func (r *RAM) WriteU16(pos uint16, value uint16) {
 }
 
 func (r *RAM) WriteU8(pos uint16, value uint8) {
-	switch {
-	// TODO(001): Proper hook for serial output
-	case pos == 0xFF01:
-		// fmt.Printf("%c", value)
-		// r.Serial.WriteByte(value)
-	}
 	r.memory[pos] = value
 }
 

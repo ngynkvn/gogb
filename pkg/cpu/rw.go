@@ -175,6 +175,10 @@ func (c *CPU) FetchR8(reg uint8) uint8 {
 // Read u8 from memory, incur +1 cycle
 func (c *CPU) ReadU8(pos uint16) uint8 {
 	c.CycleM += 1
+	switch {
+	case pos == ADDR_JOYPAD:
+		return c.GetJoypadState()
+	}
 	return c.ram.ReadU8(pos)
 }
 
@@ -186,14 +190,27 @@ func (c *CPU) ReadU16(pos uint16) uint16 {
 
 // Write u8 to memory, incur +1 cycle
 func (c *CPU) WriteU8(pos uint16, value uint8) {
-	switch pos {
-	case ADDR_DIV:
+	switch {
+	case pos == ADDR_DIV:
 		c.DIV = 0x00
 		c.ram.WriteU8(pos, 0x00)
-	case graphics.ADDR_LY:
+	case pos == graphics.ADDR_LY:
 		c.ram.WriteU8(pos, 0x00)
-	case graphics.ADDR_DMA:
+	case pos == graphics.ADDR_DMA:
 		c.ram.DMA(value)
+	case pos == 0xFF01:
+		// Serial Output
+		// TODO(001): Proper hook for serial output
+		// fmt.Printf("%c", value)
+		// r.Serial.WriteByte(value)
+		c.ram.WriteU8(pos, value)
+	case pos < 0x8000 || 0xFEA0 <= pos && pos < 0xFEFF:
+		// Illegal rom writes
+		break
+	case 0xE000 <= pos && pos < 0xFE00:
+		// ECHO ram
+		*c.ram.Ptr(pos - 0x2000) = value
+		c.ram.WriteU8(pos, value)
 	default:
 		c.ram.WriteU8(pos, value)
 	}
