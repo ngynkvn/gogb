@@ -10,6 +10,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Ebiten struct {
@@ -25,8 +26,22 @@ func (e *Ebiten) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS:%f\nTPS:%f", ebiten.ActualFPS(), ebiten.ActualTPS()))
 }
 
+func printHex(i uint8) {
+	fmt.Printf("%#02x\n", i)
+}
+
+const TICK_RATE = 1048576 // hz
+
+// TODO: accurate throttling
 func (e *Ebiten) Update() error {
-	e.cpu.Update()
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+		println(e.cpu.Dump())
+		printHex(e.ram.ReadU8(0xFF47))
+		printHex(e.ram.ReadU8(0xFF48))
+		printHex(e.ram.ReadU8(0xFF49))
+	}
+	for cycs := uint(0); cycs < 17476/4; cycs += e.cpu.Update() {
+	}
 	return nil
 }
 
@@ -43,10 +58,7 @@ func NewEbiten(cpu *cpu.CPU, display *graphics.Display, ram *mem.RAM) *Ebiten {
 	}
 }
 
-const TICK_RATE = 1048576 * 4
-
 func (e *Ebiten) Start() {
-	ebiten.SetTPS(TICK_RATE)
 	if err := ebiten.RunGame(e); err != nil {
 		log.Fatal(err)
 	}
