@@ -46,6 +46,7 @@ const (
 )
 
 // TODO: accurate throttling
+// TODO: fix janky input
 func (e *Ebiten) Update() error {
 	switch {
 	case inpututil.IsKeyJustPressed(ebiten.KeyP):
