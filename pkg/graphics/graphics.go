@@ -33,8 +33,6 @@ const (
 	SCREEN_H = 144
 )
 
-type Surface [SCREEN_H][SCREEN_W]color.RGBA
-
 type Display struct {
 	ram        *mem.RAM
 	Frame      image.Image

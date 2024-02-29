@@ -38,6 +38,7 @@ func main() {
 	}
 	mem := mem.NewRAM()
 	path := args[0]
+	// TODO: add optional bootrom loading
 	// bootrom, err := os.ReadFile("./bootrom.bin")
 	// if err != nil {
 	// 	slog.Error("err: %s", err)
@@ -56,20 +57,25 @@ func main() {
 	cpu := cpu.NewCPU(mem, display)
 	// TODO
 	cpu.SkipBootRom()
+
+	// Kill on signal
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
-		for _ = range c {
+		for range c {
 			pprof.StopCPUProfile()
 			slog.Info("Capture successful")
 			os.Exit(0)
 		}
 	}()
-	go func() {
-		time.Sleep(2 * time.Minute)
-		c <- nil
-	}()
+	if *cpuprofile != "" {
+		go func() {
+			slog.Info("Starting countdown to kill signal")
+			time.Sleep(2 * time.Minute)
+			c <- nil
+		}()
 
+	}
 	renderer := render.NewEbiten(cpu, display, mem)
 	renderer.Start()
 }
