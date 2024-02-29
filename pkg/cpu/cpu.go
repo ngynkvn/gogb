@@ -77,7 +77,6 @@ type CPU struct {
 	display *graphics.Display
 	Halt    bool
 	CycleM  uint
-	// stop   bool
 
 	A, F, B, C, D, E uint8
 	H, L             uint8

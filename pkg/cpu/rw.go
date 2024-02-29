@@ -208,7 +208,7 @@ func (c *CPU) WriteU8(pos uint16, value uint8) {
 		// Serial Output
 		// TODO(001): Proper hook for serial output
 		// fmt.Printf("%c", value)
-		// r.Serial.WriteByte(value)
+		c.ram.Serial.WriteByte(value)
 		c.ram.WriteU8(pos, value)
 	case pos < 0x8000 || 0xFEA0 <= pos && pos < 0xFEFF:
 		// Illegal rom writes
