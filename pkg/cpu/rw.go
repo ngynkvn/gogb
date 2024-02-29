@@ -32,7 +32,7 @@ func (c *CPU) SetR8(reg uint8) func(uint8) {
 	return func(u uint8) {
 		// TODO: refactor
 		if reg == 6 {
-			c.CycleM++
+			c.SpinCycle(1)
 		}
 		*c.Location(reg) = u
 	}
@@ -98,7 +98,7 @@ func (c *CPU) SetHL(value uint16) {
 }
 
 func (c *CPU) FetchR16(reg uint8) uint16 {
-	c.CycleM += 1
+	c.SpinCycle(1)
 	switch reg {
 	case 0:
 		return c.BC()
@@ -174,22 +174,31 @@ func (c *CPU) FetchR8(reg uint8) uint8 {
 
 // Read u8 from memory, incur +1 cycle
 func (c *CPU) ReadU8(pos uint16) uint8 {
-	c.CycleM += 1
+	c.SpinCycle(1)
+	c.Graphics(1)
 	switch {
 	case pos == ADDR_JOYPAD:
 		return c.GetJoypadState()
+		// TODO:
+		// case 0x8000 <= pos && pos < 0x9FFF && !c.display.Mode3():
+		// 	return 0xFF
+		// case 0xFEA0 <= pos && pos < 0xFEFF && !c.display.Mode0():
+		// 	return 0xFF
 	}
 	return c.ram.ReadU8(pos)
 }
 
 // Read u16 from memory, incur +2 cycle
 func (c *CPU) ReadU16(pos uint16) uint16 {
-	c.CycleM += 2
+	c.SpinCycle(2)
+	c.Graphics(2)
 	return c.ram.ReadU16(pos)
 }
 
 // Write u8 to memory, incur +1 cycle
 func (c *CPU) WriteU8(pos uint16, value uint8) {
+	c.SpinCycle(1)
+	c.Graphics(1)
 	switch {
 	case pos == ADDR_DIV:
 		c.DIV = 0x00
@@ -214,24 +223,22 @@ func (c *CPU) WriteU8(pos uint16, value uint8) {
 	default:
 		c.ram.WriteU8(pos, value)
 	}
-	c.CycleM += 1
 }
 
 // Write u16 to memory, incur +2 cycle
 func (c *CPU) WriteU16(pos uint16, value uint16) {
-	c.CycleM += 2
+	c.SpinCycle(2)
+	c.Graphics(2)
 	c.ram.WriteU16(pos, value)
 }
 
 func (c *CPU) ReadU8Imm() uint8 {
-	result := c.ram.ReadU8(c.PC)
-	c.CycleM += 1
+	result := c.ReadU8(c.PC)
 	c.PC += 1
 	return result
 }
 func (c *CPU) ReadU16Imm() uint16 {
-	result := c.ram.ReadU16(c.PC)
-	c.CycleM += 2
+	result := c.ReadU16(c.PC)
 	c.PC += 2
 	return result
 }

@@ -39,7 +39,9 @@ type Display struct {
 	ram        *mem.RAM
 	Frame      image.Image
 	screenData *image.RGBA
-	Dots       int
+	// "Dots" are a time unit that represents one pixel push to the screen.
+	// TODO: currently we render dots by scanline, change to per dot for more accuracy?
+	Dots int
 }
 
 func NewDisplay(ram *mem.RAM) *Display {
@@ -51,6 +53,10 @@ func NewDisplay(ram *mem.RAM) *Display {
 		screenData: screenData,
 		Dots:       456,
 	}
+}
+
+func (d *Display) STAT() uint8 {
+	return d.ram.ReadU8(ADDR_STAT)
 }
 
 func (d *Display) LCDC() uint8 {
