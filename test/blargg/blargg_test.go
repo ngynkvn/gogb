@@ -1,7 +1,6 @@
 package blargg
 
 import (
-	"bytes"
 	"fmt"
 	"gogb/pkg/cpu"
 	"gogb/pkg/graphics"
@@ -60,7 +59,6 @@ func TestCpuInstrs(t *testing.T) {
 }
 
 func TestMemoryInstrs(t *testing.T) {
-	t.Skip("TODO")
 	rom_path := "memory/mem_timing.gb"
 	rom, err := os.ReadFile(rom_path)
 	if err != nil {
@@ -72,17 +70,11 @@ func TestMemoryInstrs(t *testing.T) {
 	graphics := graphics.NewDisplay(ram)
 	cpu := cpu.NewCPU(ram, graphics)
 	cpu.SkipBootRom()
-	slice := ram.Slice(0xA000, 0xA003)
-	signature := []byte{0xDE, 0xB0, 0x61}
-	assert.Len(t, slice, 4)
-	for {
-		cpu.Update()
-		if bytes.Equal(slice[1:4], signature) && slice[0] != 0x80 {
-			break
+	for maxCycles := uint(0x18f6e7); maxCycles >= 0; maxCycles -= cpu.Update() {
+		if strings.Contains(ram.Serial.String(), "Passed") {
+			t.Log("Passed at Cycle=", fmt.Sprintf("%x", cpu.CycleM))
+			return
 		}
 	}
-	str := ram.Slice(0xA004, 0xA004+100)
-	t.Log(slice)
-	assert.EqualValues(t, slice[0], 0, str)
-
+	t.Fatal("Failed, cycles was", fmt.Sprintf("%x", cpu.CycleM))
 }
