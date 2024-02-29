@@ -22,7 +22,7 @@ const ADDR_IF = 0xFF0F
 const ADDR_IE = 0xFFFF
 
 func (c *CPU) Interrupts() (cycles uint) {
-	if !c.IME && !c.halt {
+	if !c.IME && !c.Halt {
 		return 0
 	}
 
@@ -39,6 +39,14 @@ func (c *CPU) Interrupts() (cycles uint) {
 
 }
 
+const (
+	BIT_VBLANK = 0
+	BIT_LCD    = 1
+	BIT_TIMER  = 2
+	BIT_SERIAL = 3
+	BIT_JOYPAD = 4
+)
+
 func (c *CPU) RequestInterrupt(intAddr uint8) {
 	flags := c.ram.ReadU8(ADDR_IF) | 0xE0
 	flags = bits.Set(flags, intAddr)
@@ -46,12 +54,12 @@ func (c *CPU) RequestInterrupt(intAddr uint8) {
 }
 
 func (c *CPU) ServiceInterrupt(intAddr uint8) {
-	if !c.IME && c.halt {
-		c.halt = false
+	if !c.IME && c.Halt {
+		c.Halt = false
 		return
 	}
 	c.IME = false
-	c.halt = false
+	c.Halt = false
 	flags := c.ram.ReadU8(ADDR_IF)
 	flags = bits.Reset(flags, intAddr)
 	c.ram.WriteU8(ADDR_IF, flags)

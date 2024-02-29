@@ -75,7 +75,7 @@ var INSTR_NAME = [256]string{
 type CPU struct {
 	ram     *mem.RAM
 	display *graphics.Display
-	halt    bool
+	Halt    bool
 	CycleM  uint
 	// stop   bool
 
@@ -155,7 +155,7 @@ func (c *CPU) FetchExecute() uint {
 	// TODO:
 	// need better way to repr how many cycles would have
 	// passed in halt situations
-	if c.halt {
+	if c.Halt {
 		return 1
 	}
 	opcode := c.ReadU8Imm()
@@ -204,7 +204,7 @@ func (c *CPU) FetchExecute() uint {
 		c.SetC(tmpVal&0x100 == 0x100)
 		c.CycleM++
 	case 0x76:
-		c.halt = true
+		c.Halt = true
 		c.CycleM += 2
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
 		// ADD A, r8
@@ -297,7 +297,7 @@ func (c *CPU) FetchExecute() uint {
 		c.SetC(result > 0x7F)
 	case 0x10:
 		// STOP
-		c.halt = true
+		c.Halt = true
 		c.CycleM += 2
 	case 0x17:
 		// RLA
