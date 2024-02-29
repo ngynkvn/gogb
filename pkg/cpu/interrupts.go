@@ -59,9 +59,8 @@ func (c *CPU) ServiceInterrupt(intAddr uint8) {
 	}
 	c.IME = false
 	c.Halt = false
-	flags := c.ram.ReadU8(ADDR_IF)
-	flags = bits.Reset(flags, intAddr)
-	c.ram.WriteU8(ADDR_IF, flags)
+	flags := c.ram.Ptr(ADDR_IF)
+	*flags = bits.Reset(*flags, intAddr)
 
 	c.PushStack(c.PC)
 	c.PC = INT_ADDR_MAP[intAddr]
