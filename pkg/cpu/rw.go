@@ -175,7 +175,6 @@ func (c *CPU) FetchR8(reg uint8) uint8 {
 // Read u8 from memory, incur +1 cycle
 func (c *CPU) ReadU8(pos uint16) uint8 {
 	c.SpinCycle(1)
-	c.Graphics(1)
 	switch {
 	case pos == ADDR_JOYPAD:
 		return c.GetJoypadState()
@@ -191,14 +190,12 @@ func (c *CPU) ReadU8(pos uint16) uint8 {
 // Read u16 from memory, incur +2 cycle
 func (c *CPU) ReadU16(pos uint16) uint16 {
 	c.SpinCycle(2)
-	c.Graphics(2)
 	return c.ram.ReadU16(pos)
 }
 
 // Write u8 to memory, incur +1 cycle
 func (c *CPU) WriteU8(pos uint16, value uint8) {
 	c.SpinCycle(1)
-	c.Graphics(1)
 	switch {
 	case pos == ADDR_DIV:
 		c.DIV = 0x00
@@ -228,7 +225,6 @@ func (c *CPU) WriteU8(pos uint16, value uint8) {
 // Write u16 to memory, incur +2 cycle
 func (c *CPU) WriteU16(pos uint16, value uint16) {
 	c.SpinCycle(2)
-	c.Graphics(2)
 	c.ram.WriteU16(pos, value)
 }
 
