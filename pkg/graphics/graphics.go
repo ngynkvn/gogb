@@ -185,11 +185,16 @@ func (d *Display) RenderTiles(scanline uint8) {
 	windowX := d.ram.ReadU8(ADDR_WINDOWX) - 7
 	ly := d.ram.ReadU8(ADDR_LY)
 
-	// TODO: window rendering
-	// windowArea := d.WindowTileMapArea()
-	bgArea := d.BGTileMapArea()
 	unsignedAddrMode := d.UnsignedAddressMode()
 	usingWindow := d.WindowEnabled() && windowY <= ly
+
+	// TODO: verify
+	var bgMemory []uint8
+	if usingWindow {
+		bgMemory = d.WindowTileMapArea()
+	} else {
+		bgMemory = d.BGTileMapArea()
+	}
 
 	var baseTileAddr uint16
 	if unsignedAddrMode {
@@ -215,7 +220,7 @@ func (d *Display) RenderTiles(scanline uint8) {
 		}
 		tileCol := uint16(xPos / 8)
 		tileAddr := tileRow + tileCol
-		tileNum := bgArea[tileAddr]
+		tileNum := bgMemory[tileAddr]
 		tileLocation := baseTileAddr
 		if unsignedAddrMode {
 			tileLocation += uint16(tileNum) * 16
