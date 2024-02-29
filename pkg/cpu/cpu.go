@@ -210,8 +210,8 @@ func (c *CPU) FetchExecute() {
 	case 0x76:
 		// Halt
 		c.Halt = true
-		// c.ReadU8(c.PC)
-		c.SpinCycle(2)
+		// TODO: ?
+		// c.SpinCycle(2)
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
 		// ADD A, r8
 		c.Add(opcode, false)
@@ -304,7 +304,7 @@ func (c *CPU) FetchExecute() {
 	case 0x10:
 		// STOP
 		c.Halt = true
-		c.SpinCycle(2)
+		c.ReadU8(c.PC)
 	case 0x17:
 		// RLA
 		val := c.A
