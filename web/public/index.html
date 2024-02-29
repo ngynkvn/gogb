@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<script src="wasm_exec.js"></script>
+<script>
+// Polyfill
+if (!WebAssembly.instantiateStreaming) {
+    WebAssembly.instantiateStreaming = async (resp, importObject) => {
+        const source = await (await resp).arrayBuffer();
+        return await WebAssembly.instantiate(source, importObject);
+    };
+}
+
+const go = new Go();
+let _result = null;
+WebAssembly.instantiateStreaming(fetch("emu.wasm"), go.importObject).then(result => {
+    _result = result;
+    go.run(result.instance);
+});
+</script>
