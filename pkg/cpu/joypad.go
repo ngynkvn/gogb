@@ -42,7 +42,7 @@ func (c *CPU) KeyPressed(key uint8) {
 			(!buttonPress && !bits.Test(keyReq, BIT_DPAD))
 
 	if requestInterrupt && prevUnset {
-		c.RequestInterrupt(0b0100)
+		c.RequestInterrupt(BIT_JOYPAD)
 	}
 }
 

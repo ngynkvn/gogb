@@ -36,10 +36,12 @@ const (
 type Surface [SCREEN_H][SCREEN_W]color.RGBA
 
 type Display struct {
-	ram             *mem.RAM
-	Frame           image.Image
-	screenData      *image.RGBA
-	ScanlineCounter int
+	ram        *mem.RAM
+	Frame      image.Image
+	screenData *image.RGBA
+	// "Dots" are a time unit that represents one pixel push to the screen.
+	// TODO: currently we render dots by scanline, change to per dot for more accuracy?
+	Dots int
 }
 
 func NewDisplay(ram *mem.RAM) *Display {
@@ -47,10 +49,14 @@ func NewDisplay(ram *mem.RAM) *Display {
 	return &Display{
 		ram: ram,
 		// TODO: proper interface
-		Frame:           screenData,
-		screenData:      screenData,
-		ScanlineCounter: 456,
+		Frame:      screenData,
+		screenData: screenData,
+		Dots:       456,
 	}
+}
+
+func (d *Display) STAT() uint8 {
+	return d.ram.ReadU8(ADDR_STAT)
 }
 
 func (d *Display) LCDC() uint8 {
@@ -119,7 +125,7 @@ func (d *Display) SetLCDStatus() bool {
 	// TODO(006): check this routine
 	if !d.LCDEnabled() {
 		// d.ClearScreen()
-		d.ScanlineCounter = 456
+		d.Dots = 456
 		*ly = 0
 		*status &= 0b1111_1100
 		return false
@@ -136,12 +142,12 @@ func (d *Display) SetLCDStatus() bool {
 		*status = bits.Set(*status, 0)
 		*status = bits.Reset(*status, 1)
 		requestInterrupt = bits.Test(*status, 4)
-	case d.ScanlineCounter >= LCDMode2Bound:
+	case d.Dots >= LCDMode2Bound:
 		mode = 2
 		*status = bits.Set(*status, 1)
 		*status = bits.Reset(*status, 0)
 		requestInterrupt = bits.Test(*status, 5)
-	case d.ScanlineCounter >= LCDMode3Bound:
+	case d.Dots >= LCDMode3Bound:
 		mode = 3
 		*status = bits.Set(*status, 1)
 		*status = bits.Set(*status, 0)

@@ -75,7 +75,7 @@ var INSTR_NAME = [256]string{
 type CPU struct {
 	ram     *mem.RAM
 	display *graphics.Display
-	halt    bool
+	Halt    bool
 	CycleM  uint
 	// stop   bool
 
@@ -137,16 +137,20 @@ func (c *CPU) SetA(val uint8) {
 	c.A = val
 }
 
+func (c *CPU) SpinCycle(val uint) {
+	c.CycleM += val
+	c.Graphics(val)
+	c.Timer(val)
+}
+
 func (c *CPU) Update() uint {
 	if c.EI_QUEUED {
 		c.IME = true
 		c.EI_QUEUED = false
 	}
 	cycs := c.CycleM
-	opCycles := c.FetchExecute()
-	c.Graphics(opCycles)
-	c.Timer(opCycles)
-	c.CycleM += c.Interrupts()
+	c.FetchExecute()
+	c.Interrupts()
 	return c.CycleM - cycs
 }
 
@@ -155,7 +159,7 @@ func (c *CPU) FetchExecute() uint {
 	// TODO:
 	// need better way to repr how many cycles would have
 	// passed in halt situations
-	if c.halt {
+	if c.Halt {
 		return 1
 	}
 	opcode := c.ReadU8Imm()
@@ -202,10 +206,12 @@ func (c *CPU) FetchExecute() uint {
 		tmpVal := a ^ uint16(b) ^ result
 		c.SetH(tmpVal&0x10 == 0x10)
 		c.SetC(tmpVal&0x100 == 0x100)
-		c.CycleM++
+		c.SpinCycle(1)
 	case 0x76:
-		c.halt = true
-		c.CycleM += 2
+		// Halt
+		c.Halt = true
+		c.ReadU8(c.PC)
+		// c.SpinCycle(2)
 	case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87:
 		// ADD A, r8
 		c.Add(opcode, false)
@@ -297,8 +303,8 @@ func (c *CPU) FetchExecute() uint {
 		c.SetC(result > 0x7F)
 	case 0x10:
 		// STOP
-		c.halt = true
-		c.CycleM += 2
+		c.Halt = true
+		c.SpinCycle(2)
 	case 0x17:
 		// RLA
 		val := c.A
@@ -374,7 +380,7 @@ func (c *CPU) FetchExecute() uint {
 	case 0xF9:
 		// LD SP, HL
 		c.SP = c.HL()
-		c.CycleM++
+		c.SpinCycle(1)
 	case 0xEA:
 		// LD [a16], A
 		c.WriteU8(c.ReadU16Imm(), c.A)
@@ -390,7 +396,7 @@ func (c *CPU) FetchExecute() uint {
 		tmpVal := a ^ uint16(b) ^ result
 		c.SetH(tmpVal&0x10 == 0x10)
 		c.SetC(tmpVal&0x100 == 0x100)
-		c.CycleM += 2
+		c.SpinCycle(2)
 	case 0xC6:
 		// ADD A, n8
 		c.AddImm8(false)
@@ -421,7 +427,7 @@ func (c *CPU) FetchExecute() uint {
 	case 0xD9:
 		// RETI
 		pos := c.PopStack()
-		c.CycleM++
+		c.SpinCycle(1)
 		c.PC = pos
 		c.IME = true
 	case 0xE0:

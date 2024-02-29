@@ -25,11 +25,19 @@ var shader *ebiten.Shader
 func (e *Ebiten) Draw(screen *ebiten.Image) {
 	img := ebiten.NewImageFromImage(e.display.Frame)
 	screen.DrawImage(img, nil)
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS:%f\nTPS:%f\n", ebiten.ActualFPS(), ebiten.ActualTPS()))
-}
-
-func printHex(i uint8) {
-	fmt.Printf("%#02x\n", i)
+	ebitenutil.DebugPrint(screen, fmt.Sprintf(
+		`
+tps:%f
+LY:%#08b
+LCDC:%#08b
+STAT&3:%#08b
+STAT:%#08b`,
+		ebiten.ActualTPS(),
+		e.ram.ReadU8(graphics.ADDR_LY),
+		e.ram.ReadU8(graphics.ADDR_LCDC),
+		e.display.STAT()&3,
+		e.display.STAT(),
+	))
 }
 
 const TICK_RATE = 1048576 // hz
@@ -58,6 +66,9 @@ var KeyMap = map[ebiten.Key]uint8{
 	ebiten.KeySpace: START,
 }
 
+func p(i uint8) string { return fmt.Sprintf("%#02x", i) }
+func b(i uint8) string { return fmt.Sprintf("%#08b", i) }
+
 // TODO: accurate throttling
 // TODO: fix janky input
 func (e *Ebiten) Update() error {
@@ -68,6 +79,15 @@ func (e *Ebiten) Update() error {
 			"0xFF48", fmt.Sprintf("%#02x", e.ram.ReadU8(0xFF48)),
 			"0xFF49", fmt.Sprintf("%#02x", e.ram.ReadU8(0xFF49)),
 		).Info("debug key pressed")
+		slog.With(
+			"STAT", p(e.display.STAT()),
+			"LCDC", p(e.display.LCDC()),
+		).Info("display")
+		slog.With(
+			"IE", b(e.ram.ReadU8(cpu.ADDR_IE)),
+			"IF", b(e.ram.ReadU8(cpu.ADDR_IF)),
+		).Info("display")
+		slog.Info("Halted?", "halt", e.cpu.Halt)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return ebiten.Termination
@@ -80,7 +100,7 @@ func (e *Ebiten) Update() error {
 		}
 	}
 
-	for cycs := uint(0); cycs < 17476/4; cycs += e.cpu.Update() {
+	for cycs := uint(0); cycs < 69905; cycs += e.cpu.Update() {
 	}
 	return nil
 }

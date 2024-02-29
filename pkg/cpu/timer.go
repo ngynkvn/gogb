@@ -29,7 +29,7 @@ func (c *CPU) Timer(mCycles uint) {
 			c.TimerCount -= freq
 			if *tima == 0xFF {
 				*tima = c.ram.ReadU8(ADDR_TMA)
-				c.RequestInterrupt(0b10)
+				c.RequestInterrupt(BIT_TIMER)
 			} else {
 				*tima++
 			}
