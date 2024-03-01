@@ -21,9 +21,9 @@ var INT_ADDR_MAP = [5]uint16{
 const ADDR_IF = 0xFF0F
 const ADDR_IE = 0xFFFF
 
-func (c *CPU) Interrupts() (cycles uint) {
+func (c *CPU) Interrupts() {
 	if !c.IME && !c.Halt {
-		return 0
+		return
 	}
 
 	flags := c.ram.ReadU8(ADDR_IF) | 0xE0
@@ -31,11 +31,10 @@ func (c *CPU) Interrupts() (cycles uint) {
 
 	for i := uint8(0); i < 5; i++ {
 		if bits.Test(flags, i) && bits.Test(enabled, i) {
+			c.SpinCycle(2)
 			c.ServiceInterrupt(i)
-			return 20
 		}
 	}
-	return 0
 
 }
 
@@ -60,10 +59,10 @@ func (c *CPU) ServiceInterrupt(intAddr uint8) {
 	}
 	c.IME = false
 	c.Halt = false
-	flags := c.ram.ReadU8(ADDR_IF)
-	flags = bits.Reset(flags, intAddr)
-	c.ram.WriteU8(ADDR_IF, flags)
+	flags := c.ram.Ptr(ADDR_IF)
+	*flags = bits.Reset(*flags, intAddr)
 
 	c.PushStack(c.PC)
 	c.PC = INT_ADDR_MAP[intAddr]
+	c.SpinCycle(1)
 }

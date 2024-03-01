@@ -41,7 +41,7 @@ func (c *CPU) PUSH(opcode uint8) {
 	src := (opcode >> 4) & 0b11
 	val := c.FetchR16Stk(src)
 	c.PushStack(val)
-	c.CycleM++
+	c.SpinCycle(1)
 }
 func (c *CPU) POP(opcode uint8) {
 	dst := (opcode >> 4) & 0b11
