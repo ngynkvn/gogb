@@ -130,6 +130,8 @@ var shaderSrc []byte
 func (e *Ebiten) Start() {
 	var err error
 	ebiten.SetWindowSize(graphics.SCREEN_W*4, graphics.SCREEN_H*4)
+	ebiten.SetWindowTitle("GB Emulator")
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	shader, err = ebiten.NewShader(shaderSrc)
 	if err != nil {
 		log.Fatal(err)
