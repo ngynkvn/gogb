@@ -24,7 +24,14 @@ var shader *ebiten.Shader
 
 func (e *Ebiten) Draw(screen *ebiten.Image) {
 	img := ebiten.NewImageFromImage(e.display.Frame)
-	screen.DrawImage(img, nil)
+	bounds := screen.Bounds()
+	screen.DrawRectShader(bounds.Dx(), bounds.Dy(), shader, &ebiten.DrawRectShaderOptions{
+		Images: [4]*ebiten.Image{img},
+	})
+	e.DebugPrint(screen)
+}
+
+func (e *Ebiten) DebugPrint(screen *ebiten.Image) {
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(
 		`
 tps:%f
@@ -117,15 +124,16 @@ func NewEbiten(cpu *cpu.CPU, display *graphics.Display, ram *mem.RAM) *Ebiten {
 	}
 }
 
-// -go:embed shaders/crt.kage
-// var shaderSrc []byte
+//go:embed shaders/crt.kage
+var shaderSrc []byte
 
 func (e *Ebiten) Start() {
-	// var err error
-	// shader, err = ebiten.NewShader(shaderSrc)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	var err error
+	ebiten.SetWindowSize(graphics.SCREEN_W*4, graphics.SCREEN_H*4)
+	shader, err = ebiten.NewShader(shaderSrc)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if err := ebiten.RunGame(e); err != nil {
 		log.Fatal(err)
 	}
