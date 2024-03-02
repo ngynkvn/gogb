@@ -3,6 +3,18 @@ package main
 //kage:unit pixels
 
 // Uniform variables
-func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+func Fragment(position vec4, _ vec2, _ vec4) vec4 {
+	imgPixCoords := position.xy
+	return imageColorAtPixel(imgPixCoords)
+}
+
+func imageColorAtPixel(pixelCoords vec2) vec4 {
+	offsetInPixels, _ := imageSrcRegionOnTexture()
+	adjustedTexelCoords := pixelCoords + offsetInPixels
+	color := imageSrc0At(adjustedTexelCoords)
+	if mod(pixelCoords.y, 2) < 1 {
+		// Darken slightly
+		color.rgb -= vec3(1,1,1)*0.025
+	}
 	return color
 }
